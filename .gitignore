@@ -1,0 +1,4 @@
+*.pyc
+variables.env
+venv
+.idea
