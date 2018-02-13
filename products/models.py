@@ -35,7 +35,7 @@ class Orders(models.Model):
         This model stores all the single orders as well as the orders
         from subscriptions of a user.
     """
-    user_id = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
     is_subscription = models.BooleanField(default=False)
     customer_order_id = models.BigIntegerField()
     payment_type_choices = (
@@ -54,8 +54,8 @@ class CartProducts(models.Model):
         This model stores the products saved by the user in the
         cart.
     """
-    user_id = models.ForeignKey(MyUser, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
     added_on = models.DateTimeField(auto_now_add=True)
     quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)
@@ -65,11 +65,11 @@ class Subscriptions(models.Model):
     """
         This model stores the subscriptions of the all the users.
     """
-    user_id = models.ForeignKey(MyUser, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
-    order_id = models.ForeignKey(Orders, on_delete=models.CASCADE)
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    order = models.ForeignKey(Orders, on_delete=models.CASCADE)
     start_date = models.DateTimeField()
-    category_id = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
     status_choices = (
         ('A', 'ACTIVE'),
         ('P', 'PAUSED'),
