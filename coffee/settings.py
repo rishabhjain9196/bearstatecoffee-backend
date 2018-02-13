@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'rest_framework',
     'accounts',
+    'products',
 ]
 
 MIDDLEWARE = [
@@ -120,6 +121,8 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Enabling Monkey Patching for ArrayManyToManyField
+ENABLE_ARRAY_M2M = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
