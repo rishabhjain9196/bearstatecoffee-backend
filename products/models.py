@@ -3,6 +3,16 @@ from django.contrib.postgres.fields import ArrayField
 from accounts.models import MyUser
 
 
+class Categories(models.Model):
+    """
+        This links the products to their specific available periodicity for subscription
+        period_number is an integer representation (id) for the corresponding period_name.
+    """
+    period_number = models.IntegerField()
+    period_name = models.CharField(max_length=100)
+    terms = models.CharField(max_length=5000)
+
+
 class Products(models.Model):
     """
         This model stores the details of each product
@@ -17,7 +27,7 @@ class Products(models.Model):
     users_rated = models.IntegerField(default=0)
     is_combo = models.BooleanField(default=False)
     combo_product_ids = models.ManyToManyField("self")
-    category_ids = ArrayField(models.IntegerField())  # Change to manytomany field after Category table is added.
+    category_ids = models.ManyToManyField("Categories")
 
 
 class Orders(models.Model):
@@ -51,6 +61,21 @@ class CartProducts(models.Model):
     is_active = models.BooleanField(default=True)
 
 
-
-
-
+class Subscriptions(models.Model):
+    """
+        This model stores the subscriptions of the all the users.
+    """
+    user_id = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
+    order_id = models.ForeignKey(Orders, on_delete=models.CASCADE)
+    start_date = models.DateTimeField()
+    category_id = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    status_choices = (
+        ('A', 'ACTIVE'),
+        ('P', 'PAUSED'),
+        ('C',  'CANCELLED'),
+        ('F', 'FINISHED')
+    )
+    status = models.CharField(max_length=1, choices=status_choices, default='A')
+    next_order_date = models.DateTimeField()
+    last_order_date = models.DateTimeField()
