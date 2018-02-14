@@ -72,3 +72,57 @@ class VerifyEmailView(APIView):
             return response
 
         return HttpResponse("<h1>Link Does not Exist </h1>")
+
+
+class ResetPasswordView(APIView):
+    """
+        This will reset the password
+    """
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get(self, request, token):
+        """
+            Won't let user to rest the password after 2 days and 2nd time.
+        """
+        user = MyUser.objects.filter(email_token=token).first()
+        if user:
+            checker_date = timezone.now() - datetime.timedelta(days=2)
+
+            if checker_date > user.email_token_created_on:
+                response = HttpResponse("<h1>Link Expired</h1>")
+            else:
+                user.is_verified = True
+                response = HttpResponse("<h1>You can verify your password</h1>")
+
+            user.save()
+
+            return response
+
+        return HttpResponse("<h1>Link Does not Exist </h1>")
+
+    def post(self, request, token):
+        """
+            Let the user change the password for the first time within 2 days
+        """
+        _password = request.data['password']
+        _confirmed_password = request.data['confirm_password']
+
+        user = MyUser.objects.filter(email_token=token).first()
+        if user:
+            checker_date = timezone.now() - datetime.timedelta(days=2)
+            response = dict()
+            if checker_date > user.email_token_created_on:
+                response = {'result': False, 'message': 'Link expired.'}
+                user.email_token = ""
+            elif _password == _confirmed_password:
+                user.is_verified = True
+                user.set_password(_password)
+                user.email_token = ""
+                response = {'result': True, 'message': 'Password reset successful.'}
+
+            user.save()
+
+            return Response(response)
+
+        return Response({'result': False, 'message': 'Link does not exists.'})

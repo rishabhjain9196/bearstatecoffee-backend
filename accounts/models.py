@@ -1,7 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .managers import MyUserManager
-import datetime, hashlib, os, smtplib
+import datetime
+import hashlib
+import os
+import smtplib
 
 # Create your models here.
 
