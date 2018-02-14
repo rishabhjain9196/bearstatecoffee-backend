@@ -129,7 +129,7 @@ STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -137,3 +137,14 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'accounts.MyUser'
+
+
+# Client_ID and Client_SECRET for OAUTH2
+CLIENT_ID = os.environ['client_id']
+CLIENT_SECRET = os.environ['client_secret']
+
+
+OAUTH2_PROVIDER = {
+    # this is the list of available scopes
+    'SCOPES': {'read': 'Read scope', 'write': 'Write scope'}
+}

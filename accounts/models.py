@@ -10,7 +10,7 @@ class BaseModel(models.Model):
         This is for storing commonly used fields.
     """
     created_on = models.DateTimeField(auto_now_add=True)
-    modified_on = models.DateTimeField(auto_now_add=True)
+    modified_on = models.DateTimeField(auto_now=True)
 
 
 class MyUser(AbstractBaseUser, PermissionsMixin, BaseModel):
@@ -23,6 +23,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin, BaseModel):
     phone_number = models.CharField(max_length=15)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
 
