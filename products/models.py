@@ -28,6 +28,7 @@ class Products(models.Model):
     is_combo = models.BooleanField(default=False)
     combo_product_ids = models.ManyToManyField("self")
     category_ids = models.ManyToManyField("Categories")
+    is_delete = models.BooleanField(default=False)
 
 
 class Orders(models.Model):
