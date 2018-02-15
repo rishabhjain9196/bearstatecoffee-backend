@@ -1,6 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from accounts.utils import verify_email, register_user, login_user, reset_password_form, reset_password
+from rest_framework import permissions
+from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope
+from accounts.utils import verify_email, register_user, login_user, revoke_auth_token, reset_password_form,\
+    reset_password
 
 # Create your views here.
 
@@ -18,22 +21,14 @@ class SignUpView(APIView):
         :param request: requires email, password, first_name, last_name, phone_number, user_type.
         :return: result = True with 200 response code.
         """
-        query_data = dict()
-        query_data['email'] = request.data['email']
-        query_data['password'] = request.data['password']
-        query_data['first_name'] = request.data['first_name']
-        query_data['last_name'] = request.data['last_name']
-        query_data['phone_number'] = request.data['phone_number']
         user_type = request.data['user_type']
-
-        return register_user(user_type, query_data)
+        return register_user(user_type, request.data)
 
 
 class VerifyEmailView(APIView):
     """
         This will verify the email.
     """
-    authentication_classes = ()
     permission_classes = ()
 
     def get(self, request, token):
@@ -47,7 +42,6 @@ class ResetPasswordView(APIView):
     """
         This will reset the password
     """
-    authentication_classes = ()
     permission_classes = ()
 
     def get(self, request, token):
@@ -73,7 +67,6 @@ class LoginView(APIView):
     """
         This will help in login using OAuth2.
     """
-    authentication_classes = ()
     permission_classes = ()
 
     def post(self, request):
@@ -81,3 +74,14 @@ class LoginView(APIView):
         password = request.data['password']
 
         return login_user(email, password)
+
+
+class LogoutView(APIView):
+    """
+        This will help in logout of user.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        token = request.auth
+        return revoke_auth_token(token)

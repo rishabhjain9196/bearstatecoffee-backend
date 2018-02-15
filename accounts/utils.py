@@ -4,27 +4,29 @@ from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import status
-from accounts.models import MyUser
 import coffee.settings as st
+from accounts.models import MyUser
+from accounts.serializers import MyUserSerializer, MyUserSignupSerializer
 
 
-def register_user(user_type, query_data):
+def register_user(user_type, data):
     """
         Helper function to register user.
     """
-    if MyUser.objects.filter(email=query_data['email']):
+    serialized_data = MyUserSignupSerializer(data=data)
+    if not serialized_data.is_valid():
         response = {'result': False, 'message': 'User already exists'}
         return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
     if user_type == 'super_user':
-        MyUser.objects.create_superuser(**query_data)
+        MyUser.objects.create_superuser(**serialized_data.validated_data)
     elif user_type == 'user':
-        user = MyUser.objects.create_user(**query_data)
+        user = MyUser.objects.create_user(**serialized_data.validated_data)
         user.send_verification_email()
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    return Response({'result': True, 'message': 'User registered successfully.'})
+    return Response({'result': True, 'data': 'User registered successfully.'})
 
 
 def get_auth_token(email, password):
@@ -41,9 +43,23 @@ def get_auth_token(email, password):
     return requests.post(url, data=payload, auth=auth)
 
 
+def revoke_auth_token(token):
+    """
+        This methods sends the post request to revoke token.
+    """
+    url = 'http://localhost:8000/o/revoke_token/'
+    auth = (st.CLIENT_ID, st.CLIENT_SECRET)
+    payload = {
+        'token': token
+    }
+    if requests.post(url, data=payload, auth=auth).status_code == 200:
+        return Response({'result': True, 'data': 'Revoked'})
+    return Response({'result': False, 'message': 'Some problem occurred'})
+
+
 def login_user(email, password):
     """
-        This will first confirm if user is already registered with email or not,
+        This will first confirm if user is already verified the email or not,
         if not then it wil send the email to verify the user.
     """
     user = MyUser.objects.filter(email=email).first()
@@ -51,10 +67,17 @@ def login_user(email, password):
     if user:
         if user.is_verified:
             response = get_auth_token(email, password)
-            return Response(response.json())
+            payload = {
+                'result': True,
+                'data': {
+                    'token': response.json(),
+                    'user': MyUserSerializer(instance=user).data
+                }
+            }
+            return Response(payload)
         else:
             user.send_verification_email()
-            return Response({'result': True, 'message': 'Verify Your Email First'})
+            return Response({'result': True, 'data': 'Verify Your Email First'})
     else:
         return Response({'result': False, 'message': 'Invalid Credentials'})
 
@@ -129,7 +152,7 @@ def reset_password(token, password):
             user.is_verified = True
             user.set_password(password)
             user.email_token = ""
-            response = {'result': True, 'message': 'Password reset successful.'}
+            response = {'result': True, 'data': 'Password reset successful.'}
 
         user.save()
 
