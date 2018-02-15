@@ -28,18 +28,17 @@ class EditProducts(APIView):
             Function to insert data into the products table.
         """
         data = request.data
-        return utils.insert(data)
+        return utils.add_product(data)
 
     def delete(self, request, pk):
         """
             Function to delete a product using it's primary key.
         """
-        return utils.delete(pk)
+        return utils.delete_product(pk)
 
     def patch(self, request, pk):
         """
             This function updates a product with given primary key
         """
         data = request.data
-        return utils.update(data, pk)
-
+        return utils.update_product(data, pk)

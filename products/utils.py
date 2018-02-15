@@ -4,7 +4,7 @@ from products.models import Products
 from products.serializers import ProductSerializer
 
 
-def insert(data):
+def add_product(data):
     serializer = ProductSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
@@ -12,11 +12,14 @@ def insert(data):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def fetch_with_pk(key):
+def get_product_with_pk(key):
     try:
-        return Products.objects.get(pk=key)
+        product = Products.objects.get(pk=key)
+        if product.is_delete:
+            return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+        return product
     except Products.DoesNotExist:
-        raise Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
 
 
 def fetch_all_products():
@@ -25,8 +28,14 @@ def fetch_all_products():
     return serializer.data
 
 
-def update(data, key):
-    product = fetch_with_pk(key)
+def update_product(data, key):
+    try:
+        product = Products.objects.get(pk=key)
+        if product.is_delete:
+            return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+    except Products.DoesNotExist:
+        return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+
     valid_fields = ['name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
                     'is_delete']
     for field in data:
@@ -36,10 +45,14 @@ def update(data, key):
     return Response({'STATUS': 'UPDATED'}, status=status.HTTP_200_OK)
 
 
-def delete(key):
-    product = fetch_with_pk(key)
-    if product.is_delete:
+def delete_product(key):
+    try:
+        product = Products.objects.get(pk=key)
+        if product.is_delete:
+            return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+    except Products.DoesNotExist:
         return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+
     setattr(product, "is_delete", True)
     product.save()
-    return Response({'STATUS': 'DELETED'}, status=status.HTTP_204_NO_CONTENT)
+    return Response({'STATUS': 'DELETED'}, status=status.HTTP_200_OK)
