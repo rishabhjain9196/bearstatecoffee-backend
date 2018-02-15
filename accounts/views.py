@@ -1,10 +1,11 @@
+import datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from accounts.models import MyUser
-import datetime
 from django.utils import timezone
 from django.http import HttpResponse
+from accounts.models import MyUser
+from accounts.utils import get_auth_token, register_user
 
 # Create your views here.
 
@@ -126,3 +127,28 @@ class ResetPasswordView(APIView):
             return Response(response)
 
         return Response({'result': False, 'message': 'Link does not exists.'})
+
+
+class LoginView(APIView):
+    """
+        This will help in login using OAuth2.
+    """
+    authentication_classes = ()
+    permission_classes = ()
+
+    def post(self, request):
+        _email = request.data['email']
+        _password = request.data['password']
+
+        user = MyUser.objects.filter(email=_email).first()
+
+        if user:
+            if user.is_verified:
+                response = get_auth_token(_email, _password)
+                return Response(response.json())
+            else:
+                user.send_verification_email()
+                return Response({'result': True, 'message': 'Verify Your Email First'})
+        else:
+            return Response({'result': False, 'message': 'Invalid Credentials'})
+
