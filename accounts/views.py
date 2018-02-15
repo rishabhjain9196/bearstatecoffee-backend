@@ -1,11 +1,6 @@
-import datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from django.utils import timezone
-from django.http import HttpResponse
-from accounts.models import MyUser
-from accounts.utils import get_auth_token, register_user
+from accounts.utils import verify_email, register_user, login_user, reset_password_form, reset_password
 
 # Create your views here.
 
@@ -31,19 +26,7 @@ class SignUpView(APIView):
         query_data['phone_number'] = request.data['phone_number']
         user_type = request.data['user_type']
 
-        if MyUser.objects.filter(email=query_data['email']):
-            response = {'result': False, 'message': 'User already exists'}
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
-
-        if user_type == 'super_user':
-            user = MyUser.objects.create_superuser(**query_data)
-        elif user_type == 'user':
-            user = MyUser.objects.create_user(**query_data)
-            user.send_verification_email()
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        return Response({'result': True, 'message': 'User registered successfully.'})
+        return register_user(user_type, query_data)
 
 
 class VerifyEmailView(APIView):
@@ -57,22 +40,7 @@ class VerifyEmailView(APIView):
         """
             Check if the email got verified within 2 days.
         """
-        user = MyUser.objects.filter(email_token=token).first()
-        if user:
-            checker_date = timezone.now() - datetime.timedelta(days=2)
-
-            if checker_date > user.email_token_created_on:
-                response = HttpResponse("<h1>Link Expired</h1>")
-            else:
-                user.is_verified = True
-                response = HttpResponse("<h1>Email Address Successfully Verified</h1>")
-
-            user.email_token = ""
-            user.save()
-
-            return response
-
-        return HttpResponse("<h1>Link Does not Exist </h1>")
+        return verify_email(token)
 
 
 class ResetPasswordView(APIView):
@@ -86,21 +54,7 @@ class ResetPasswordView(APIView):
         """
             Won't let user to rest the password after 2 days and 2nd time.
         """
-        user = MyUser.objects.filter(email_token=token).first()
-        if user:
-            checker_date = timezone.now() - datetime.timedelta(days=2)
-
-            if checker_date > user.email_token_created_on:
-                response = HttpResponse("<h1>Link Expired</h1>")
-            else:
-                user.is_verified = True
-                response = HttpResponse("<h1>You can verify your password</h1>")
-
-            user.save()
-
-            return response
-
-        return HttpResponse("<h1>Link Does not Exist </h1>")
+        return reset_password_form(token)
 
     def post(self, request, token):
         """
@@ -109,24 +63,10 @@ class ResetPasswordView(APIView):
         _password = request.data['password']
         _confirmed_password = request.data['confirm_password']
 
-        user = MyUser.objects.filter(email_token=token).first()
-        if user:
-            checker_date = timezone.now() - datetime.timedelta(days=2)
-            response = dict()
-            if checker_date > user.email_token_created_on:
-                response = {'result': False, 'message': 'Link expired.'}
-                user.email_token = ""
-            elif _password == _confirmed_password:
-                user.is_verified = True
-                user.set_password(_password)
-                user.email_token = ""
-                response = {'result': True, 'message': 'Password reset successful.'}
+        if _password == _confirmed_password:
+            return reset_password(token, _password)
 
-            user.save()
-
-            return Response(response)
-
-        return Response({'result': False, 'message': 'Link does not exists.'})
+        return Response({'result': False, 'message': "Password doesn't match"})
 
 
 class LoginView(APIView):
@@ -137,18 +77,7 @@ class LoginView(APIView):
     permission_classes = ()
 
     def post(self, request):
-        _email = request.data['email']
-        _password = request.data['password']
+        email = request.data['email']
+        password = request.data['password']
 
-        user = MyUser.objects.filter(email=_email).first()
-
-        if user:
-            if user.is_verified:
-                response = get_auth_token(_email, _password)
-                return Response(response.json())
-            else:
-                user.send_verification_email()
-                return Response({'result': True, 'message': 'Verify Your Email First'})
-        else:
-            return Response({'result': False, 'message': 'Invalid Credentials'})
-
+        return login_user(email, password)

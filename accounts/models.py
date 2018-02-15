@@ -1,10 +1,10 @@
-from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from .managers import MyUserManager
 import datetime
 import hashlib
 import os
 import smtplib
+from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from .managers import MyUserManager
 
 # Create your models here.
 
@@ -60,22 +60,23 @@ class MyUser(AbstractBaseUser, PermissionsMixin, BaseModel):
         server.login(os.environ['email_address'], os.environ['email_password'])
 
         msg += base_url + self.email_token + '/'
-        print(msg)
         server.sendmail(os.environ['email_address'], self.email, msg)
         server.quit()
 
     def send_verification_email(self):
         """
             This method will send the mail to verify the email.
+            Caution : Don't remove \n from msg, else mail will go in spam, without body.
         """
         url = "http://127.0.0.1:8000/accounts/verify/email/"
-        msg = "Click on the following url to verify your email address. "
+        msg = "Click on the following url to verify your email address.\n "
         self.send_email(url, msg)
 
     def send_reset_password_email(self):
         """
             This method will send the mail to reset the password.
+            Caution : Don't remove \n from msg, else mail will go in spam, without body.
         """
         url = "http://127.0.0.1:8000/accounts/reset/password/"
-        msg = "Click on the following url to reset your password. "
+        msg = "Click on the following url to reset your password.\n "
         self.send_email(url, msg)
