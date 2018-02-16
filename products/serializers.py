@@ -7,3 +7,10 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Products
         fields = ('pk', 'name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
                   'is_delete')
+
+
+class CategoriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categories
+        fields = ('pk', 'period_number', 'period_name', 'terms')
+
