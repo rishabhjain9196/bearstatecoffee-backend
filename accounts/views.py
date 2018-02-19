@@ -1,9 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
-from accounts.serializers import MyUserUpdateSerializer
+from accounts.serializers import MyUserUpdateSerializer, MyUserSerializer
 from accounts.utils import verify_email, register_user, login_user, revoke_auth_token, reset_password_form,\
-    reset_password
+    reset_password, send_reset_password_email
 
 # Create your views here.
 
@@ -12,7 +12,6 @@ class SignUpView(APIView):
     """
         Signup for the user.
     """
-    authentication_classes = ()
     permission_classes = ()
 
     def post(self, request):
@@ -38,9 +37,20 @@ class VerifyEmailView(APIView):
         return verify_email(token)
 
 
-class ResetPasswordView(APIView):
+class ResetPasswordSendMailView(APIView):
     """
-        This will reset the password
+        This will send the email to reset the password.
+    """
+    permission_classes = ()
+
+    def post(self, request):
+        email = request.data['email']
+        return send_reset_password_email(email)
+
+
+class ResetPasswordMailView(APIView):
+    """
+        This will reset the password using mail.
     """
     permission_classes = ()
 
@@ -61,6 +71,26 @@ class ResetPasswordView(APIView):
             return reset_password(token, _password)
 
         return Response({'result': False, 'message': "Password doesn't match"})
+
+
+class ChangePasswordView(APIView):
+    """
+        This will let the user to change his password.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        previous_password = request.data['previous_password']
+        password = request.data['password']
+        confirm_password = request.data['confirm_password']
+        user = request.user
+
+        if password == confirm_password and user.check_password(previous_password):
+            user.set_password(password)
+            user.save()
+            return Response({'result': True, 'data': 'Password Changed Successfully'})
+
+        return Response({'result': False, 'message': 'Password does not matches.'})
 
 
 class LoginView(APIView):
@@ -84,7 +114,7 @@ class LogoutView(APIView):
 
     def post(self, request):
         token = request.auth
-        return Response({'dsf': 'sdfsd'})
+        return revoke_auth_token(token)
 
 
 class UserDetailsView(APIView):
@@ -92,6 +122,15 @@ class UserDetailsView(APIView):
         This will fetch the user details
     """
     permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        user = request.user
+        payload = {
+            'result': True,
+            'data': MyUserSerializer(instance=user).data
+        }
+
+        return Response(payload)
 
     def put(self, request):
         user = request.user

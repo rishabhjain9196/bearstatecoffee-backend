@@ -1,5 +1,9 @@
 import requests
 import datetime
+import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.response import Response
@@ -7,6 +11,57 @@ from rest_framework import status
 import coffee.settings as st
 from accounts.models import MyUser
 from accounts.serializers import MyUserSerializer, MyUserSignupSerializer
+
+
+def send_text_email(body, subject, to_address, from_address=os.environ['email_address']):
+    """
+        This will send the email.
+    """
+    msg = MIMEMultipart()
+    msg['From'] = from_address
+    msg['To'] = to_address
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(os.environ['email_address'], os.environ['email_password'])
+    text = msg.as_string()
+    server.sendmail(from_address, to_address, text)
+    server.quit()
+
+
+def send_verification_email(token, email):
+    """
+        This method will send the mail to verify the email.
+        Caution : Don't remove \n from msg, else mail will go in spam, without body.
+    """
+    url = "http://127.0.0.1:8000/accounts/verify/email/"
+    subject = "Welcome to BearStateCoffee. Verify Your Email."
+    msg = "Click on the following url to verify your email address.\n "
+    msg += url + token + '/'
+
+    send_text_email(msg, subject, email)
+
+
+def send_reset_password_email(email):
+    """
+        This method will send the mail to reset the password.
+        Caution : Don't remove \n from msg, else mail will go in spam, without body.
+    """
+    user = MyUser.objects.filter(email=email).first()
+    if user:
+        user.generate_token()
+
+        subject = "Reset Your Password"
+        url = "http://127.0.0.1:8000/accounts/reset/password/"
+        msg = "Click on the following url to reset your password.\n "
+        msg += url + user.token + '/'
+
+        send_text_email(msg, subject, email)
+        return Response({'result': True, 'data': 'Email Sent'})
+    else:
+        return Response({'result': False, 'message': 'Invalid Email'})
 
 
 def register_user(user_type, data):
@@ -22,7 +77,8 @@ def register_user(user_type, data):
         MyUser.objects.create_superuser(**serialized_data.validated_data)
     elif user_type == 'user':
         user = MyUser.objects.create_user(**serialized_data.validated_data)
-        user.send_verification_email()
+        user.generate_token()
+        send_verification_email(user.email_token, user.email)
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -67,6 +123,8 @@ def login_user(email, password):
     if user:
         if user.is_verified:
             response = get_auth_token(email, password)
+            if 'error' in response.json():
+                return Response({'result': False, 'message': 'Invalid Credentials'})
             payload = {
                 'result': True,
                 'data': {
@@ -76,7 +134,8 @@ def login_user(email, password):
             }
             return Response(payload)
         else:
-            user.send_verification_email()
+            user.generate_token()
+            send_verification_email(user.email_token, user.email)
             return Response({'result': True, 'data': 'Verify Your Email First'})
     else:
         return Response({'result': False, 'message': 'Invalid Credentials'})
