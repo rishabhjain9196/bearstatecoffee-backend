@@ -18,3 +18,12 @@ class MyUserSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = ('email', 'password', 'first_name', 'last_name', 'phone_number')
+
+
+class MyUserUpdateSerializer(serializers.ModelSerializer):
+    """
+        This is for updating the user details.
+    """
+    class Meta:
+        model = MyUser
+        fields = ('first_name', 'last_name', 'phone_number', 'is_active')

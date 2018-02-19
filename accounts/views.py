@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope
+from accounts.serializers import MyUserUpdateSerializer
 from accounts.utils import verify_email, register_user, login_user, revoke_auth_token, reset_password_form,\
     reset_password
 
@@ -84,4 +84,22 @@ class LogoutView(APIView):
 
     def post(self, request):
         token = request.auth
-        return revoke_auth_token(token)
+        return Response({'dsf': 'sdfsd'})
+
+
+class UserDetailsView(APIView):
+    """
+        This will fetch the user details
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def put(self, request):
+        user = request.user
+        serialized_data = MyUserUpdateSerializer(data=request.data, partial=True)
+        if serialized_data.is_valid():
+            for key, value in serialized_data.validated_data.items():
+                setattr(user, key, value)
+            user.save()
+            return Response({'result': True, 'data': 'Updated Successfully.'})
+        else:
+            return Response({'result': False, 'message': 'Invalid data.'})
