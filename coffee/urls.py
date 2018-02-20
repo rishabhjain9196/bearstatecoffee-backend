@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('products/', include('products.urls')),
+    path('accounts/', include('accounts.urls')),
 ]
