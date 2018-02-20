@@ -11,6 +11,7 @@ class Categories(models.Model):
     period_number = models.IntegerField()
     period_name = models.CharField(max_length=100)
     terms = models.CharField(max_length=5000)
+    is_deleted = models.BooleanField(default=False)
 
 
 class Products(models.Model):
@@ -50,10 +51,10 @@ class Orders(models.Model):
     is_subscription = models.BooleanField(default=False)
     customer_order_id = models.BigIntegerField()
     payment_type_choices = (
-        ('C', 'Cash on Delivery'),
-        ('N', 'Net Banking'),
+        ('C', 'CASH ON DELIVERY'),
+        ('N', 'NET BANKING'),
         ('U', 'UPI'),
-        ('D', 'Debit/Credit Cards')
+        ('D', 'DEBIT/CREDIT CARDS')
     )
     payment_type = models.CharField(max_length=1, choices=payment_type_choices, default='C')
     payment_status = models.BooleanField(default=False)
@@ -91,3 +92,4 @@ class Subscriptions(models.Model):
     status = models.CharField(max_length=1, choices=status_choices, default='I')
     next_order_date = models.DateTimeField()
     last_order_date = models.DateTimeField()
+    paid_till = models.DateTimeField(blank=True, null=True)

@@ -8,6 +8,7 @@ from products.models import Categories, Products
 def fetch_all_categories():
     """
         Utility function to get all the categories
+        :return JSON data containing all the categories
     """
     query_set = Categories.objects.all()
     serializer = CategoriesSerializer(query_set, many=True)
@@ -17,6 +18,8 @@ def fetch_all_categories():
 def add_category(data):
     """
         Utility function to Add a new category option
+        :param data: Data of the category that has to be added.
+        :return: Response whether the data was added(status = 201) or not(status= 400)
     """
     serializer = CategoriesSerializer(data=data)
     if serializer.is_valid():
@@ -28,6 +31,8 @@ def add_category(data):
 def update_category(data, key):
     """
         Utility function to update an existing category
+        :param data: Data of the category that has to be updated.
+        :return: Response whether the data was updated(status = 200) or not(status= 404)
     """
     category = Categories.objects.filter(pk=key).first()
     if not category:
@@ -43,6 +48,8 @@ def update_category(data, key):
 def delete_category(key):
     """
         Utility function to delete category
+        :param key: Primary key of the category to be deleted
+        :return: Response whether the data was added(status = 200) or not(status= 404)
     """
     category = Categories.objects.filter(pk=key).first()
     if not category:
@@ -54,6 +61,8 @@ def delete_category(key):
 def get_all_categories_of_product(key):
     """
         Utility function to get available categories of a given product
+        :param key: Primary key of the product for which categories are to be fetched.
+        :return: Response whether the data was successfully fetched(status = 200) or not(status= 404)
     """
     product = Products.objects.filter(pk=key).first()
     if not product:
@@ -65,6 +74,9 @@ def get_all_categories_of_product(key):
 def add_category_to_product(product_pk, category_pk):
     """
         Utility function to add a category to a given product
+        :param product_pk: Primary key of a product to which category is to be added.
+        :param category_pk: Primary key of Category which is to be added.
+        :return: Response whether the data was added(status = 201) or not(status= 404)
     """
     product = Products.objects.filter(pk=product_pk).first()
     category = Categories.objects.filter(pk=category_pk).first()
@@ -77,6 +89,9 @@ def add_category_to_product(product_pk, category_pk):
 def remove_category_from_product(product_pk, category_pk):
     """
         Utility function to remove a category from a given product
+        :param product_pk: Primary key of a product to which category is to be removed.
+        :param category_pk: Primary key of Category which is to be removed.
+        :return: Response whether the data was removed(status = 200) or not(status= 404)
     """
     product = Products.objects.filter(pk=product_pk).first()
     category = Categories.objects.filter(pk=category_pk).first()
