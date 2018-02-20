@@ -32,6 +32,10 @@ class Products(models.Model):
 
 
 class Combo(models.Model):
+    """
+        This model is to add extra field - quantity to the many to many relationship
+        of combos with products.
+    """
     combo = models.ForeignKey(Products, related_name="combo_combo_id", on_delete=models.CASCADE)
     product = models.ForeignKey(Products, related_name="quantity", on_delete=models.CASCADE)
     quantity = models.IntegerField()
@@ -81,8 +85,9 @@ class Subscriptions(models.Model):
         ('A', 'ACTIVE'),
         ('P', 'PAUSED'),
         ('C',  'CANCELLED'),
-        ('F', 'FINISHED')
+        ('F', 'FINISHED'),
+        ('I', 'INACTIVE')
     )
-    status = models.CharField(max_length=1, choices=status_choices, default='A')
+    status = models.CharField(max_length=1, choices=status_choices, default='I')
     next_order_date = models.DateTimeField()
     last_order_date = models.DateTimeField()

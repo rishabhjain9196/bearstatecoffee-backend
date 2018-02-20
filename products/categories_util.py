@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status
+
 from products.serializers import CategoriesSerializer
 from products.models import Categories, Products
 
@@ -28,11 +29,9 @@ def update_category(data, key):
     """
         Utility function to update an existing category
     """
-    try:
-        category = Categories.objects.get(pk=key)
-    except Products.DoesNotExist:
-        return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
-
+    category = Categories.objects.filter(pk=key).first()
+    if not category:
+        return Response({'STATUS': 'CATEGORY NOT FOUND'}, status=status.HTTP_404_NOT_FOUND)
     valid_fields = ['period_number', 'period_name', 'terms']
     for field in data:
         if field in valid_fields:
@@ -45,10 +44,9 @@ def delete_category(key):
     """
         Utility function to delete category
     """
-    try:
-        category = Categories.objects.get(pk=key)
-    except Products.DoesNotExist:
-        return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+    category = Categories.objects.filter(pk=key).first()
+    if not category:
+        return Response({'STATUS': 'CATEGORY NOT FOUND'}, status=status.HTTP_404_NOT_FOUND)
     category.delete()
     return Response({'STATUS': 'DELETED'}, status=status.HTTP_200_OK)
 
@@ -57,7 +55,9 @@ def get_all_categories_of_product(key):
     """
         Utility function to get available categories of a given product
     """
-    product = Products.objects.get(pk=key)
+    product = Products.objects.filter(pk=key).first()
+    if not product:
+        return Response({'STATUS': 'UNAVAILABLE PRODUCT'}, status=status.HTTP_404_NOT_FOUND)
     ser = CategoriesSerializer(product.category_ids.all(), many=True)
     return Response(ser.data, status=status.HTTP_200_OK)
 
@@ -66,17 +66,21 @@ def add_category_to_product(product_pk, category_pk):
     """
         Utility function to add a category to a given product
     """
-    product = Products.objects.get(pk=product_pk)
-    category = Categories.objects.get(pk=category_pk)
+    product = Products.objects.filter(pk=product_pk).first()
+    category = Categories.objects.filter(pk=category_pk).first()
+    if not product or not category:
+        return Response({'STATUS': 'UNAVAILABLE PRODUCT OR CATEGORY'}, status=status.HTTP_404_NOT_FOUND)
     product.category_ids.add(category)
-    return Response(status=status.HTTP_201_CREATED)
+    return Response({'STATUS': 'ADDED CATEGORY'}, status=status.HTTP_201_CREATED)
 
 
 def remove_category_from_product(product_pk, category_pk):
     """
         Utility function to remove a category from a given product
     """
-    product = Products.objects.get(pk=product_pk)
-    category = Categories.objects.get(pk=category_pk)
+    product = Products.objects.filter(pk=product_pk).first()
+    category = Categories.objects.filter(pk=category_pk).first()
+    if not product or not category:
+        return Response({'STATUS': 'UNAVAILABLE PRODUCT OR CATEGORY'}, status=status.HTTP_404_NOT_FOUND)
     product.category_ids.remove(category)
-    return Response(status=status.HTTP_200_OK)
+    return Response({'STATUS': 'DELETED CATEGORY'}, status=status.HTTP_200_OK)

@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status
+
 from products.models import Products, Combo
 from products.serializers import ProductSerializer, ComboSerializer
 
@@ -19,7 +20,7 @@ def fetch_all_products():
     """
         Utility function to get all products
     """
-    query_set = Products.objects.all(is_delete=False)
+    query_set = Products.objects.filter(is_delete=False, is_combo=False)
     serializer = ProductSerializer(query_set, many=True)
     return serializer.data
 
