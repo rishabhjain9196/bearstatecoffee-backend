@@ -20,3 +20,12 @@ class ComboSerializer(serializers.ModelSerializer):
     class Meta:
         model = Combo
         fields = ('quantity',)
+
+
+class CartProductSerializer(serializers.ModelSerializer):
+    """
+        This is for returning serialized cart products items.
+    """
+    class Meta:
+        model = CartProducts
+        fields = '__all__'

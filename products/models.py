@@ -63,6 +63,7 @@ class CartProducts(models.Model):
     """
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    order = models.ForeignKey(Orders, on_delete=models.CASCADE, blank=True, null=True)
     added_on = models.DateTimeField(auto_now_add=True)
     quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)

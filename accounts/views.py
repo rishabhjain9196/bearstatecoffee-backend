@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
+
 from accounts.serializers import MyUserUpdateSerializer, MyUserSerializer
 from accounts.utils import verify_email, register_user, login_user, revoke_auth_token, reset_password_form,\
     reset_password, send_reset_password_email
@@ -33,6 +34,7 @@ class VerifyEmailView(APIView):
     def get(self, request, token):
         """
             Check if the email got verified within 2 days.
+        :param token: Fetched from url, and it will be unique token.
         """
         return verify_email(token)
 

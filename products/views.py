@@ -1,3 +1,4 @@
+from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from products import product_utils, categories_util
@@ -111,4 +112,11 @@ class ComboView(APIView):
         return Response(product_utils.create_combo(request.data))
 
 
+class AddProductToCart(APIView):
+    """
+        Add products to the cart.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
 
+    def post(self, request):
+        return product_utils.add_product_to_cart(request.user, request.data)

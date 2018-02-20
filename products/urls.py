@@ -5,7 +5,7 @@ urlpatterns = [
     # view : View all Products
     re_path('^view', views.ProductsView.as_view()),
     # change : Add Products
-    re_path('^add', views.EditProductsView.as_view()),
+    re_path('^add$', views.EditProductsView.as_view()),
     # 7/change : Delete or Update a Product
     re_path('^(?P<pk>[0-9]+)/change$', views.EditProductsView.as_view()),
     # 7/categories/add : View category options in Product with pk = 7
@@ -26,4 +26,6 @@ urlpatterns = [
     re_path('^combo/add', views.ComboView.as_view()),
     # View all Combos
     re_path('^combo/view', views.ComboView.as_view()),
+
+    re_path('^add/product/to/cart/', views.AddProductToCart.as_view()),
 ]

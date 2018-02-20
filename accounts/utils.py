@@ -4,10 +4,13 @@ import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
 from django.http import HttpResponse
 from django.utils import timezone
+
 from rest_framework.response import Response
 from rest_framework import status
+
 import coffee.settings as st
 from accounts.models import MyUser
 from accounts.serializers import MyUserSerializer, MyUserSignupSerializer
@@ -16,6 +19,11 @@ from accounts.serializers import MyUserSerializer, MyUserSignupSerializer
 def send_text_email(body, subject, to_address, from_address=os.environ['email_address']):
     """
         This will send the email.
+    :param body: Body of the mail.
+    :param subject: Subject of the mail.
+    :param to_address: Email-address of the recipient.
+    :param from_address: Email-address of the sender.
+    :return: It won't return anything.
     """
     msg = MIMEMultipart()
     msg['From'] = from_address
@@ -35,10 +43,13 @@ def send_verification_email(token, email):
     """
         This method will send the mail to verify the email.
         Caution : Don't remove \n from msg, else mail will go in spam, without body.
+    :param token: this will be the email-token fetched from the url
+    :param email: email address of the user.
+    :return: It won't return anything
     """
-    url = "http://127.0.0.1:8000/accounts/verify/email/"
-    subject = "Welcome to BearStateCoffee. Verify Your Email."
-    msg = "Click on the following url to verify your email address.\n "
+    url = st.BASE_URL + '/accounts/verify/email/'
+    subject = 'Welcome to BearStateCoffee. Verify Your Email.'
+    msg = 'Click on the following url to verify your email address.\n '
     msg += url + token + '/'
 
     send_text_email(msg, subject, email)
@@ -48,14 +59,16 @@ def send_reset_password_email(email):
     """
         This method will send the mail to reset the password.
         Caution : Don't remove \n from msg, else mail will go in spam, without body.
+    :param email: Email address of the user.
+    :return: Result will be true or false
     """
     user = MyUser.objects.filter(email=email).first()
     if user:
         user.generate_token()
 
-        subject = "Reset Your Password"
-        url = "http://127.0.0.1:8000/accounts/reset/password/"
-        msg = "Click on the following url to reset your password.\n "
+        subject = 'Reset Your Password'
+        url = st.BASE_URL + '/accounts/reset/password/'
+        msg = 'Click on the following url to reset your password.\n '
         msg += url + user.token + '/'
 
         send_text_email(msg, subject, email)
@@ -67,6 +80,9 @@ def send_reset_password_email(email):
 def register_user(user_type, data):
     """
         Helper function to register user.
+    :param user_type: Whether user is super_user or just user.
+    :param data: user details.
+    :return: True or False in result param.
     """
     serialized_data = MyUserSignupSerializer(data=data)
     if not serialized_data.is_valid():
@@ -88,8 +104,11 @@ def register_user(user_type, data):
 def get_auth_token(email, password):
     """
         This methods sends the post request to fetch the access and refresh token.
+    :param email: Email address of the user.
+    :param password: Password of the user.
+    :return: Result of the post request.
     """
-    url = 'http://localhost:8000/o/token/'
+    url = st.BASE_URL + '/o/token/'
     auth = (st.CLIENT_ID, st.CLIENT_SECRET)
     payload = {
         'grant_type': 'password',
@@ -102,13 +121,15 @@ def get_auth_token(email, password):
 def revoke_auth_token(token):
     """
         This methods sends the post request to revoke token.
+    :param token: access or refresh token.
+    :return: True or False in result param.
     """
-    url = 'http://localhost:8000/o/revoke_token/'
+    url = st.BASE_URL + '/o/revoke_token/'
     auth = (st.CLIENT_ID, st.CLIENT_SECRET)
     payload = {
         'token': token
     }
-    if requests.post(url, data=payload, auth=auth).status_code == 200:
+    if requests.post(url, data=payload, auth=auth).status_code == status.HTTP_200_OK:
         return Response({'result': True, 'data': 'Revoked'})
     return Response({'result': False, 'message': 'Some problem occurred'})
 
@@ -117,6 +138,11 @@ def login_user(email, password):
     """
         This will first confirm if user is already verified the email or not,
         if not then it wil send the email to verify the user.
+    :param email: Email address of the user.
+    :param password: Password of the user.
+    :return: True or False in result param. If True then there will be a data param,
+            which will contain the token info and user details, else there will be the
+            message param, describing the error message.
     """
     user = MyUser.objects.filter(email=email).first()
 
@@ -157,7 +183,9 @@ def check_within_time(original_date, time_period_allowed):
 
 def verify_email(token):
     """
-        This will help in verifying email.
+         This will help in verifying email.
+    :param token: Email token fetched from the url.
+    :return: HTML response.
     """
     user = MyUser.objects.filter(email_token=token).first()
 
@@ -179,6 +207,8 @@ def verify_email(token):
 def reset_password_form(token):
     """
         If the link is clicked within 2 days it will return password reset form.
+    :param token: Unique token fetched from the url.
+    :return: HTML login form.
     """
     user = MyUser.objects.filter(email_token=token).first()
 
@@ -200,6 +230,9 @@ def reset_password_form(token):
 def reset_password(token, password):
     """
         It will help to reset the password, and also verifies email, if not verified.
+    :param token: Unique token fetched from the url.
+    :param password: new password of the user
+    :return: True or False in result param.
     """
     user = MyUser.objects.filter(email_token=token).first()
 

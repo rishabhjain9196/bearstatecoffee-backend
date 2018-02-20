@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
-from products.models import Products, Combo
-from products.serializers import ProductSerializer, ComboSerializer
+from products.models import Products, Combo, CartProducts
+from products.serializers import ProductSerializer, ComboSerializer, CartProductSerializer
 
 
 def add_product(data):
@@ -99,5 +99,30 @@ def view_all_combos():
                                         product=int(ser_data.data["pk"]))
             ser_quan = ComboSerializer(quan, many=True)
             serialized_data.data[counter]['combo_ids'][ser_data.data["pk"]] = ser_quan.data[0]['quantity']
-        counter = counter + 1
+        counter += 1
     return serialized_data.data
+
+
+def add_product_to_cart(user, data):
+    """
+        Helper function to add product to cart.
+    """
+    product_id = data['product_id']
+    quantity = data['quantity']
+    print(data)
+    product = Products.objects.filter(id=product_id, is_delete=False).first()
+    print(product)
+
+    if product:
+        if product.avail_quantity >= quantity:
+            cart_product = CartProducts.objects.create(user=user, product=product, quantity=quantity)
+            print(cart_product)
+            payload = {
+                'result': True,
+                'data': CartProductSerializer(instance=cart_product).data
+            }
+            return Response(payload)
+        else:
+            return Response({'result': False, 'message': 'Available quantity is '+str(quantity)})
+    else:
+        return Response({'result': False, 'message': 'No product found'})
