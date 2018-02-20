@@ -5,12 +5,18 @@ from products.models import Categories, Products
 
 
 def fetch_all_categories():
+    """
+        Utility function to get all the categories
+    """
     query_set = Categories.objects.all()
     serializer = CategoriesSerializer(query_set, many=True)
     return serializer.data
 
 
 def add_category(data):
+    """
+        Utility function to Add a new category option
+    """
     serializer = CategoriesSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
@@ -19,6 +25,9 @@ def add_category(data):
 
 
 def update_category(data, key):
+    """
+        Utility function to update an existing category
+    """
     try:
         category = Categories.objects.get(pk=key)
     except Products.DoesNotExist:
@@ -33,6 +42,9 @@ def update_category(data, key):
 
 
 def delete_category(key):
+    """
+        Utility function to delete category
+    """
     try:
         category = Categories.objects.get(pk=key)
     except Products.DoesNotExist:
@@ -42,12 +54,18 @@ def delete_category(key):
 
 
 def get_all_categories_of_product(key):
+    """
+        Utility function to get available categories of a given product
+    """
     product = Products.objects.get(pk=key)
     ser = CategoriesSerializer(product.category_ids.all(), many=True)
     return Response(ser.data, status=status.HTTP_200_OK)
 
 
 def add_category_to_product(product_pk, category_pk):
+    """
+        Utility function to add a category to a given product
+    """
     product = Products.objects.get(pk=product_pk)
     category = Categories.objects.get(pk=category_pk)
     product.category_ids.add(category)
@@ -55,6 +73,9 @@ def add_category_to_product(product_pk, category_pk):
 
 
 def remove_category_from_product(product_pk, category_pk):
+    """
+        Utility function to remove a category from a given product
+    """
     product = Products.objects.get(pk=product_pk)
     category = Categories.objects.get(pk=category_pk)
     product.category_ids.remove(category)
