@@ -23,12 +23,18 @@ class Products(models.Model):
     cost = models.DecimalField(max_digits=12, decimal_places=2)
     avail_quantity = models.IntegerField(default=0)
     desc = models.CharField(max_length=5000)
-    rating = models.DecimalField(max_digits=4, decimal_places=2)
+    rating = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
     users_rated = models.IntegerField(default=0)
     is_combo = models.BooleanField(default=False)
-    combo_product_ids = models.ManyToManyField("self")
+    combo_product_ids = models.ManyToManyField("self", through='Combo', symmetrical=False)
     category_ids = models.ManyToManyField("Categories")
     is_delete = models.BooleanField(default=False)
+
+
+class Combo(models.Model):
+    combo = models.ForeignKey(Products, related_name="combo_combo_id", on_delete=models.CASCADE)
+    product = models.ForeignKey(Products, related_name="quantity", on_delete=models.CASCADE)
+    quantity = models.IntegerField()
 
 
 class Orders(models.Model):

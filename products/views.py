@@ -20,7 +20,7 @@ class EditProductsView(APIView):
         DELETE: To delete an existing product
         PATCH: To update an existing product
     """
-    # Pending authentication from Super user, Remove next two lines after that.
+    # Pending authentication from Super user, Edit next two lines after that.
     authentication_classes = ()
     permission_classes = ()
 
@@ -79,7 +79,7 @@ class EditCategoriesView(APIView):
         DELETE: Function to delete a category using it's primary key.
         PATCH: This function updates a category with given primary key
     """
-    # Pending authentication from Super user, Remove next two lines after that.
+    # Pending authentication from Super user, Edit next two lines after that.
     authentication_classes = ()
     permission_classes = ()
 
@@ -93,3 +93,22 @@ class EditCategoriesView(APIView):
     def patch(self, request, pk):
         data = request.data
         return categories_util.update_category(data, pk)
+
+
+class ComboView(APIView):
+    """
+    GET: To view all combos
+    POST: Create a combo by passing a JSON request
+    """
+    # Pending authentication from Super user, Edit next two lines after that.
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get(self, request):
+        return Response(product_utils.view_all_combos())
+
+    def post(self, request):
+        return Response(product_utils.create_combo(request.data))
+
+
+

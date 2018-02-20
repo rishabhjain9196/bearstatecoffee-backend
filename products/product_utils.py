@@ -1,10 +1,13 @@
 from rest_framework.response import Response
 from rest_framework import status
-from products.models import Products
-from products.serializers import ProductSerializer
+from products.models import Products, Combo
+from products.serializers import ProductSerializer, ComboSerializer
 
 
 def add_product(data):
+    """
+        Utility function to add product
+    """
     serializer = ProductSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
@@ -12,29 +15,22 @@ def add_product(data):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def get_product_with_pk(key):
-    try:
-        product = Products.objects.get(pk=key)
-        if product.is_delete:
-            return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
-        return product
-    except Products.DoesNotExist:
-        return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
-
-
 def fetch_all_products():
-    query_set = Products.objects.all()
+    """
+        Utility function to get all products
+    """
+    query_set = Products.objects.all(is_delete=False)
     serializer = ProductSerializer(query_set, many=True)
     return serializer.data
 
 
 def update_product(data, key):
-    try:
-        product = Products.objects.get(pk=key)
-        if product.is_delete:
-            return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
-    except Products.DoesNotExist:
-        return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+    """
+        Utility Function to update a given product by it's key.
+    """
+    product = Products.objects.filter(pk=key, is_delete=False).first()
+    if not product:
+        return Response({'status': 'product does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
     valid_fields = ['name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
                     'is_delete']
@@ -42,17 +38,66 @@ def update_product(data, key):
         if field in valid_fields:
             setattr(product, field, data[field])
     product.save()
-    return Response({'STATUS': 'UPDATED'}, status=status.HTTP_200_OK)
+    return Response({'status': 'updated'}, status=status.HTTP_200_OK)
 
 
 def delete_product(key):
-    try:
-        product = Products.objects.get(pk=key)
-        if product.is_delete:
-            return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
-    except Products.DoesNotExist:
-        return Response({'STATUS': 'ITEM DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+    """
+        Utility function to mark a product as deleted
+    """
+    product = Products.objects.filter(pk=key, is_delete=False).first()
+    if not product:
+        return Response({'status': 'product does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
     setattr(product, "is_delete", True)
     product.save()
-    return Response({'STATUS': 'DELETED'}, status=status.HTTP_200_OK)
+    return Response({'status': 'deleted'}, status=status.HTTP_200_OK)
+
+
+def create_combo(combo):
+    """
+        Utility function to create a combo product.
+    """
+    total_quantity = 0
+    for products in combo["quantity"]:
+        total_quantity = total_quantity + combo["quantity"][products]
+    if total_quantity < 2:
+        return {'status': 'number of products must at least be two.'}
+    combo_name = combo["name"]
+    combo_image = combo["image"]
+    combo_cost = combo["cost"]
+    combo_avail_quantity = combo["avail_quantity"]
+    combo_desc = combo["desc"]
+    new_combo = Products.objects.create(name=combo_name, image=combo_image,
+                                        cost=combo_cost, avail_quantity=combo_avail_quantity,
+                                        desc=combo_desc
+                                        )
+    new_combo.is_combo = True
+    new_combo.save()
+    for product_id in combo["quantity"]:
+        product = Products.objects.filter(pk=int(product_id), is_delete=False).first()
+        if not product:
+            return {"status: one or more product in the list does not exist"}
+        m1 = Combo(combo=new_combo, product=product, quantity=combo["quantity"][product_id])
+        m1.save()
+    return {'status': 'created new combo'}
+
+
+def view_all_combos():
+    """
+        Utility function to view all combo products along with the quantity of sub-products
+    """
+    all_combos = Products.objects.filter(is_combo=True, is_delete=False)
+    serialized_data = ProductSerializer(all_combos, many=True)
+    counter = 0
+    for obj in all_combos:
+        product_ids = obj.combo_product_ids.all()
+        serialized_data.data[counter]['combo_ids'] = {}
+        for num in product_ids:
+            ser_data = ProductSerializer(num)
+            quan = Combo.objects.filter(combo=serialized_data.data[counter]["pk"],
+                                        product=int(ser_data.data["pk"]))
+            ser_quan = ComboSerializer(quan, many=True)
+            serialized_data.data[counter]['combo_ids'][ser_data.data["pk"]] = ser_quan.data[0]['quantity']
+        counter = counter + 1
+    return serialized_data.data
