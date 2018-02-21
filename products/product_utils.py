@@ -106,12 +106,18 @@ def view_all_combos():
 def add_product_to_cart(user, data):
     """
         Helper function to add product to cart.
+    :param user: user instance fetched from the request.
+    :param data: data fetched from the request, which should have product_id, and quantity.
+    :return: True or false, with appropriate message.
     """
-    product_id = data['product_id']
-    quantity = data['quantity']
-    print(data)
+    product_id = data.get('product_id')
+    quantity = data.get('quantity')
+
+    if not (product_id and quantity):
+        return Response({'result': False, 'message': 'product_id or quantity missing.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
     product = Products.objects.filter(id=product_id, is_delete=False).first()
-    print(product)
 
     if product:
         if product.avail_quantity >= quantity:
@@ -123,6 +129,7 @@ def add_product_to_cart(user, data):
             }
             return Response(payload)
         else:
-            return Response({'result': False, 'message': 'Available quantity is '+str(quantity)})
+            return Response({'result': False, 'message': 'Available quantity is '+str(quantity)},
+                            status=status.HTTP_400_BAD_REQUEST)
     else:
-        return Response({'result': False, 'message': 'No product found'})
+        return Response({'result': False, 'message': 'No product found'}, status=status.HTTP_400_BAD_REQUEST)
