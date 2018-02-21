@@ -21,3 +21,10 @@ class ComboSerializer(serializers.ModelSerializer):
     class Meta:
         model = Combo
         fields = ('quantity',)
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscriptions
+        fields = ('user', 'product', 'quantity', 'start_date', 'category', 'status', 'next_order_date',
+                  'last_order_date', 'paid_till')

@@ -103,7 +103,7 @@ def create_combo(combo):
 def view_all_combos():
     """
         Utility function to view all combo products along with the quantity of sub-products
-        :return JSON formatted serialized data of product combo with added combo_ids field having information
+        :return A response with JSON formatted serialized data of product combo with added combo_ids field having information
         regarding the primary keys of contained products.
     """
     all_combos = Products.objects.filter(is_combo=True, is_delete=False)
@@ -117,4 +117,4 @@ def view_all_combos():
                                         product=int(ser_data.data['pk']))
             ser_quan = ComboSerializer(quan, many=True)
             serialized_data.data[counter]['combo_ids'][ser_data.data['pk']] = ser_quan.data[0]['quantity']
-    return serialized_data.data
+    return Response(serialized_data.data)

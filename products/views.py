@@ -2,7 +2,7 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from products import product_utils, categories_util
+from products import product_utils, categories_util, subscription_utils
 
 
 class ProductsView(APIView):
@@ -156,7 +156,7 @@ class ComboView(APIView):
 
 class EditComboView(APIView):
     """
-    POST: To create a new combo
+        POST: To create a new combo
     """
     permission_classes = (permissions.IsAdminUser,)
 
@@ -169,4 +169,47 @@ class EditComboView(APIView):
         return product_utils.create_combo(request.data)
 
 
+class Subscription(APIView):
+    """
+        GET: To view all subscriptions by a user
+        POST: Add a subscription to a user
+        PUT: Finalize subscription
+        PATCH: Shift/Update Subscription
+    """
+    permission_classes = (permissions.IsAuthenticated,)
 
+    def get(self, request):
+        """
+        :return: Response will the JSON data of all the subscriptions of the user.
+        """
+        user_id = request.user.pk
+        return subscription_utils.view_subscription(user_id)
+
+    def post(self, request):
+        """
+        :param request: Data to add a subscription along with user's primary key
+        :return: Response whether the data was added successfully(status= 200) or
+        not(status = 400)
+        """
+        user = request.user
+        return subscription_utils.add_subscription(user, request.data)
+
+    def put(self, request):
+        """
+        :param request: Data regarding the order dates of the subscription
+        :return: Response whether the subscription was able to be finalized or not.
+        """
+        user = request.user
+        subscription_id = request.data[0]['subscription_id']
+        data = request.data[1]
+        return subscription_utils.finalize_subscription(user, subscription_id, data)
+
+
+class CheckSubscriptions(APIView):
+    permission_classes = (permissions.IsAdminUser,)
+
+    def post(self, request):
+        """
+        :return: Returns all subscriptions that have their nex order in a week.
+        """
+        return subscription_utils.check_for_new_orders()

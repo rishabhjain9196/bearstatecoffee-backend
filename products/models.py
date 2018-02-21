@@ -11,7 +11,7 @@ class Categories(models.Model):
     period_number = models.IntegerField()
     period_name = models.CharField(max_length=100)
     terms = models.CharField(max_length=5000)
-    is_deleted = models.BooleanField(default=False)
+    is_delete = models.BooleanField(default=False)
 
 
 class Products(models.Model):
@@ -79,8 +79,8 @@ class Subscriptions(models.Model):
     """
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
-    order = models.ForeignKey(Orders, on_delete=models.CASCADE)
-    start_date = models.DateTimeField()
+    quantity = models.IntegerField(default=1)
+    start_date = models.DateTimeField(blank=True, null=True)
     category = models.ForeignKey(Categories, on_delete=models.CASCADE)
     status_choices = (
         ('A', 'ACTIVE'),
@@ -90,6 +90,6 @@ class Subscriptions(models.Model):
         ('I', 'INACTIVE')
     )
     status = models.CharField(max_length=1, choices=status_choices, default='I')
-    next_order_date = models.DateTimeField()
-    last_order_date = models.DateTimeField()
+    next_order_date = models.DateTimeField(blank=True, null=True)
+    last_order_date = models.DateTimeField(blank=True, null=True)
     paid_till = models.DateTimeField(blank=True, null=True)

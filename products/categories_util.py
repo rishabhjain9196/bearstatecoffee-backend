@@ -38,11 +38,17 @@ def update_category(data, key):
     if not category:
         return Response({'STATUS': 'CATEGORY NOT FOUND'}, status=status.HTTP_404_NOT_FOUND)
     valid_fields = ['period_number', 'period_name', 'terms']
+    correct_details = True
     for field in data:
         if field in valid_fields:
             setattr(category, field, data[field])
-    category.save()
-    return Response({'STATUS': 'UPDATED'}, status=status.HTTP_200_OK)
+        else:
+            correct_details = False
+            break
+    if correct_details:
+        category.save()
+        return Response({'STATUS': 'UPDATED'}, status=status.HTTP_200_OK)
+    return Response({'STATUS': 'FIELD NOT FOUND'}, status=status.HTTP_404_NOT_FOUND)
 
 
 def delete_category(key):
@@ -54,7 +60,8 @@ def delete_category(key):
     category = Categories.objects.filter(pk=key).first()
     if not category:
         return Response({'STATUS': 'CATEGORY NOT FOUND'}, status=status.HTTP_404_NOT_FOUND)
-    category.delete()
+    setattr(category, 'is_delete', True)
+    category.save()
     return Response({'STATUS': 'DELETED'}, status=status.HTTP_200_OK)
 
 
