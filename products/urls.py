@@ -27,5 +27,5 @@ urlpatterns = [
     # View all Combos
     re_path('^combo/view', views.ComboView.as_view()),
 
-    re_path('^add/product/to/cart/', views.AddProductToCart.as_view()),
+    re_path('^add/product/to/cart/', views.AddProductToCartView.as_view()),
 ]

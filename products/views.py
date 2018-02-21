@@ -112,7 +112,7 @@ class ComboView(APIView):
         return Response(product_utils.create_combo(request.data))
 
 
-class AddProductToCart(APIView):
+class AddProductToCartView(APIView):
     """
         Add products to the cart.
     """
@@ -120,3 +120,13 @@ class AddProductToCart(APIView):
 
     def post(self, request):
         return product_utils.add_product_to_cart(request.user, request.data)
+
+
+class RemoveFromCartView(APIView):
+    """
+        Remove from cart.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def delete(self, request):
+        return product_utils.remove_from_cart(request.user, request.data)

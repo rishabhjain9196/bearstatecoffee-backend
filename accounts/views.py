@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import permissions
+from rest_framework import permissions, status
 
 from accounts.serializers import MyUserUpdateSerializer, MyUserSerializer
 from accounts.utils import verify_email, register_user, login_user, revoke_auth_token, reset_password_form,\
@@ -21,7 +21,7 @@ class SignUpView(APIView):
         :param request: requires email, password, first_name, last_name, phone_number, user_type.
         :return: result = True with 200 response code.
         """
-        user_type = request.data['user_type']
+        user_type = request.data.get('user_type', '')
         return register_user(user_type, request.data)
 
 
@@ -46,7 +46,9 @@ class ResetPasswordSendMailView(APIView):
     permission_classes = ()
 
     def post(self, request):
-        email = request.data['email']
+        email = request.data.get('email', '')
+        if not email:
+            return Response({'result': False, 'message': 'Email not found.'}, status=status.HTTP_400_BAD_REQUEST)
         return send_reset_password_email(email)
 
 
@@ -66,10 +68,10 @@ class ResetPasswordMailView(APIView):
         """
             Let the user change the password for the first time within 2 days
         """
-        _password = request.data['password']
-        _confirmed_password = request.data['confirm_password']
+        _password = request.data.get('password')
+        _confirmed_password = request.data.get('confirm_password')
 
-        if _password == _confirmed_password:
+        if _password and _confirmed_password and _password == _confirmed_password:
             return reset_password(token, _password)
 
         return Response({'result': False, 'message': "Password doesn't match"})
@@ -82,12 +84,13 @@ class ChangePasswordView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
-        previous_password = request.data['previous_password']
-        password = request.data['password']
-        confirm_password = request.data['confirm_password']
+        previous_password = request.data.get('previous_password')
+        password = request.data.get('password')
+        confirm_password = request.data.get('confirm_password')
         user = request.user
 
-        if password == confirm_password and user.check_password(previous_password):
+        if previous_password and password and confirm_password and password == confirm_password and \
+                user.check_password(previous_password):
             user.set_password(password)
             user.save()
             return Response({'result': True, 'data': 'Password Changed Successfully'})
@@ -102,10 +105,13 @@ class LoginView(APIView):
     permission_classes = ()
 
     def post(self, request):
-        email = request.data['email']
-        password = request.data['password']
+        email = request.data.get('email')
+        password = request.data.get('password')
 
-        return login_user(email, password)
+        if email and password:
+            return login_user(email, password)
+
+        return Response({'result': False, 'message': 'Missing Email or Password'})
 
 
 class LogoutView(APIView):
