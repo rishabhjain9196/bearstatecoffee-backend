@@ -6,8 +6,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Products
-        fields = ('pk', 'name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
-                  'is_delete')
+        fields = '__all__'
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -26,6 +25,8 @@ class CartProductSerializer(serializers.ModelSerializer):
     """
         This is for returning serialized cart products items.
     """
+    product = ProductSerializer()
+
     class Meta:
         model = CartProducts
-        fields = '__all__'
+        exclude = ('user',)

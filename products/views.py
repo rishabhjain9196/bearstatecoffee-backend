@@ -1,4 +1,4 @@
-from rest_framework import permissions
+from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from products import product_utils, categories_util
@@ -112,21 +112,24 @@ class ComboView(APIView):
         return Response(product_utils.create_combo(request.data))
 
 
-class AddProductToCartView(APIView):
+class CartView(APIView):
     """
-        Add products to the cart.
+        This will help in displaying, adding product, removing product from cart
     """
     permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        return product_utils.get_the_user_cart(request.user)
 
     def post(self, request):
         return product_utils.add_product_to_cart(request.user, request.data)
 
-
-class RemoveFromCartView(APIView):
-    """
-        Remove from cart.
-    """
-    permission_classes = (permissions.IsAuthenticated,)
-
     def delete(self, request):
-        return product_utils.remove_from_cart(request.user, request.data)
+        cart_product_id = request.data.get('cart_product_id', '')
+        quantity = request.data.get('quantity', '')
+
+        if not (cart_product_id and quantity):
+            return Response({'result': False, 'message': 'product_id or quantity missing.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return product_utils.remove_from_cart(request.user, cart_product_id, quantity)

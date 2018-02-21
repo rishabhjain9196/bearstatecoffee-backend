@@ -118,11 +118,19 @@ def add_product_to_cart(user, data):
                         status=status.HTTP_400_BAD_REQUEST)
 
     product = Products.objects.filter(id=product_id, is_delete=False).first()
+    cart_product = CartProducts.objects.filter(user=user, product=product, is_active=True).first()
 
     if product:
-        if product.avail_quantity >= quantity:
+        if cart_product and (cart_product.quantity+quantity <= product.avail_quantity):
+            cart_product.quantity+=quantity
+            cart_product.save()
+            payload = {
+                'result': True,
+                'data': CartProductSerializer(instance=cart_product).data
+            }
+            return Response(payload)
+        elif product.avail_quantity >= quantity:
             cart_product = CartProducts.objects.create(user=user, product=product, quantity=quantity)
-            print(cart_product)
             payload = {
                 'result': True,
                 'data': CartProductSerializer(instance=cart_product).data
@@ -133,3 +141,39 @@ def add_product_to_cart(user, data):
                             status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({'result': False, 'message': 'No product found'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def get_the_user_cart(user):
+    """
+        Helper function to fetch the cart.
+    :param user: user fetched from request.
+    :return: True or False with cart products.
+    """
+    cart_products = CartProducts.objects.filter(user=user, is_active=True)
+    payload = {
+        'result': True,
+        'data': CartProductSerializer(instance=cart_products, many=True).data
+    }
+
+    return Response(payload, status=status.HTTP_200_OK)
+
+
+def remove_from_cart(user, cart_product_id, quantity):
+    """
+        Helper function to remove quantity from cart.
+    :param user: User fetched from request.
+    :param cart_product_id: cart Id of the product.
+    :param quantity: Quantity that need to be removed.
+    :return: True or false, with appropriate message.
+    """
+    cart_product = CartProducts.objects.filter(user=user, is_active=True, pk=cart_product_id).first()
+
+    if cart_product:
+        cart_product.quantity -= quantity
+        if cart_product.quantity <= 0:
+            cart_product.is_active = False
+        cart_product.save()
+        return Response({'result': True, 'data': 'Removed'})
+    else:
+        return Response({'result': False, 'message': 'Product doesn\'t exist in cart.'},
+                        status=status.HTTP_400_BAD_REQUEST)
