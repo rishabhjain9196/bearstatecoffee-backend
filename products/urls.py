@@ -33,9 +33,13 @@ urlpatterns = [
     # View Subscription for a user (GET)
     re_path('^view/subscription$', views.Subscription.as_view()),
 
-    # Finalize Subscription PUT
+    # Show near Subscriptions (GET)
+    re_path('^check/subscription$', views.CheckSubscriptions.as_view()),
+    # Finalize Subscription (PUT)
     re_path('^finalize/subscription$', views.Subscription.as_view()),
-    # Show near Subscriptions POST
-    re_path('^check/subscription$', views.CheckSubscriptions.as_view())
+    # Shift Subscription (PATCH)
+    re_path('^shift/subscription$', views.Subscription.as_view()),
+    # Cancel Subscription (DELETE)
+    re_path('^cancel/subscription$', views.Subscription.as_view())
 
 ]

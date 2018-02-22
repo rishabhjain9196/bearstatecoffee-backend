@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -34,9 +35,11 @@ def update_category(data, key):
         :param data: Data of the category that has to be updated.
         :return: Response whether the data was updated(status = 200) or not(status= 404)
     """
-    category = Categories.objects.filter(pk=key).first()
-    if not category:
+    try:
+        category = Categories.objects.get(pk=key)
+    except ObjectDoesNotExist:
         return Response({'STATUS': 'CATEGORY NOT FOUND'}, status=status.HTTP_404_NOT_FOUND)
+
     valid_fields = ['period_number', 'period_name', 'terms']
     correct_details = True
     for field in data:
@@ -57,9 +60,11 @@ def delete_category(key):
         :param key: Primary key of the category to be deleted
         :return: Response whether the data was added(status = 200) or not(status= 404)
     """
-    category = Categories.objects.filter(pk=key).first()
-    if not category:
+    try:
+        category = Categories.objects.get(pk=key)
+    except ObjectDoesNotExist:
         return Response({'STATUS': 'CATEGORY NOT FOUND'}, status=status.HTTP_404_NOT_FOUND)
+
     setattr(category, 'is_delete', True)
     category.save()
     return Response({'STATUS': 'DELETED'}, status=status.HTTP_200_OK)
@@ -71,9 +76,11 @@ def get_all_categories_of_product(key):
         :param key: Primary key of the product for which categories are to be fetched.
         :return: Response whether the data was successfully fetched(status = 200) or not(status= 404)
     """
-    product = Products.objects.filter(pk=key).first()
-    if not product:
+    try:
+        product = Products.objects.get(pk=key)
+    except ObjectDoesNotExist:
         return Response({'STATUS': 'UNAVAILABLE PRODUCT'}, status=status.HTTP_404_NOT_FOUND)
+
     ser = CategoriesSerializer(product.category_ids.all(), many=True)
     return Response(ser.data, status=status.HTTP_200_OK)
 
@@ -85,10 +92,12 @@ def add_category_to_product(product_pk, category_pk):
         :param category_pk: Primary key of Category which is to be added.
         :return: Response whether the data was added(status = 201) or not(status= 404)
     """
-    product = Products.objects.filter(pk=product_pk).first()
-    category = Categories.objects.filter(pk=category_pk).first()
-    if not product or not category:
+    try:
+        product = Products.objects.get(pk=product_pk)
+        category = Categories.objects.get(pk=category_pk)
+    except ObjectDoesNotExist:
         return Response({'STATUS': 'UNAVAILABLE PRODUCT OR CATEGORY'}, status=status.HTTP_404_NOT_FOUND)
+
     product.category_ids.add(category)
     return Response({'STATUS': 'ADDED CATEGORY'}, status=status.HTTP_201_CREATED)
 
@@ -100,9 +109,11 @@ def remove_category_from_product(product_pk, category_pk):
         :param category_pk: Primary key of Category which is to be removed.
         :return: Response whether the data was removed(status = 200) or not(status= 404)
     """
-    product = Products.objects.filter(pk=product_pk).first()
-    category = Categories.objects.filter(pk=category_pk).first()
-    if not product or not category:
+    try:
+        product = Products.objects.get(pk=product_pk)
+        category = Categories.objects.get(pk=category_pk)
+    except ObjectDoesNotExist:
         return Response({'STATUS': 'UNAVAILABLE PRODUCT OR CATEGORY'}, status=status.HTTP_404_NOT_FOUND)
+
     product.category_ids.remove(category)
     return Response({'STATUS': 'DELETED CATEGORY'}, status=status.HTTP_200_OK)

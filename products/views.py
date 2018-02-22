@@ -25,7 +25,6 @@ class EditProductsView(APIView):
         DELETE: To delete an existing product
         PATCH: To update an existing product
     """
-    # Pending custom authentication from Super user, Edit next line after that.
     permission_classes = (permissions.IsAdminUser,)
 
     def post(self, request):
@@ -174,7 +173,7 @@ class Subscription(APIView):
         GET: To view all subscriptions by a user
         POST: Add a subscription to a user
         PUT: Finalize subscription
-        PATCH: Shift/Update Subscription
+        PATCH: Shift Subscription
     """
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -199,17 +198,33 @@ class Subscription(APIView):
         :param request: Data regarding the order dates of the subscription
         :return: Response whether the subscription was able to be finalized or not.
         """
-        user = request.user
         subscription_id = request.data[0]['subscription_id']
         data = request.data[1]
-        return subscription_utils.finalize_subscription(user, subscription_id, data)
+        return subscription_utils.finalize_subscription(subscription_id, data)
+
+    def patch(self, request):
+        """
+        :param request: Request object containing data on when to shift the next_order_date of which subscription
+        :return: Response whether the Subscription was successfully shifted or not
+        """
+        subscription_id = request.data['subscription_id']
+        new_date = request.data['next_order_date']
+        return subscription_utils.shift_subscription(subscription_id, new_date)
+
+    def delete(self, request):
+        """
+        :param request: Contains the subscription id of the subscription to be cancelled
+        :return: Response whether the subscription was cancelled(status=200) or not cancellable(status=400)
+        """
+        subscription_id = request.data['subscription_id']
+        return subscription_utils.cancel_subscription(subscription_id)
 
 
 class CheckSubscriptions(APIView):
     permission_classes = (permissions.IsAdminUser,)
 
-    def post(self, request):
+    def get(self, request):
         """
         :return: Returns all subscriptions that have their nex order in a week.
         """
-        return subscription_utils.check_for_new_orders()
+        return subscription_utils.new_orders_from_subscription()

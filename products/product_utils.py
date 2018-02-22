@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -36,9 +37,10 @@ def update_product(data, key):
         :param key: Primary key of the product to be updated
         :return A response with either updated (status = 200) or does not exist (status = 404)
     """
-    product = Products.objects.filter(pk=key, is_delete=False).first()
-    if not product:
-        return Response({'status': 'product does not exist'}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        product = Products.objects.get(pk=key, is_delete=False)
+    except ObjectDoesNotExist:
+        return Response({'STATUS': 'PRODUCT DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
 
     valid_fields = ['name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
                     'is_delete']
@@ -46,7 +48,7 @@ def update_product(data, key):
         if field in valid_fields:
             setattr(product, field, data[field])
     product.save()
-    return Response({'status': 'updated'}, status=status.HTTP_200_OK)
+    return Response({'STATUS': 'UPDATED'}, status=status.HTTP_200_OK)
 
 
 def delete_product(key):
@@ -55,13 +57,14 @@ def delete_product(key):
         :param key: Primary key of the product to be deleted
         :return A response with either deleted (status = 200) or does not exist (status = 404)
     """
-    product = Products.objects.filter(pk=key, is_delete=False).first()
-    if not product:
-        return Response({'status': 'product does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        product = Products.objects.get(pk=key, is_delete=False)
+    except ObjectDoesNotExist:
+        return Response({'STATUS': 'PRODUCT DOES NOT EXIST'}, status=status.HTTP_400_BAD_REQUEST)
 
     setattr(product, 'is_delete', True)
     product.save()
-    return Response({'status': 'deleted'}, status=status.HTTP_200_OK)
+    return Response({'STATUS': 'DELETED'}, status=status.HTTP_200_OK)
 
 
 def create_combo(combo):
@@ -75,14 +78,14 @@ def create_combo(combo):
     for products in combo.get('quantity'):
         total_quantity = total_quantity + combo.get('quantity').get(products)
     if total_quantity < 2:
-        return Response({'status': 'number of products must at least be two.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'STATUS': 'NUMBER OF PRODUCTS MUST AT LEAST BE TWO.'}, status=status.HTTP_400_BAD_REQUEST)
     combo_name = combo.get('name')
     combo_image = combo.get('image', '')
     combo_cost = combo.get('cost')
     combo_avail_quantity = combo.get('avail_quantity', 1)
     combo_desc = combo.get('desc', '')
     if not combo_name or not combo_cost:
-        return Response({'status': 'Name and Cost required for combo'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'STATUS': 'NAME AND COST ARE REQUIRED'}, status=status.HTTP_400_BAD_REQUEST)
 
     new_combo = Products.objects.create(name=combo_name, image=combo_image,
                                         cost=combo_cost, avail_quantity=combo_avail_quantity,
@@ -91,13 +94,15 @@ def create_combo(combo):
     new_combo.is_combo = True
     new_combo.save()
     for product_id in combo['quantity']:
-        product = Products.objects.filter(pk=int(product_id), is_delete=False).first()
-        if not product:
-            return Response({'status': 'one or more product in the list does not exist'},
+        try:
+            product = Products.objects.get(pk=int(product_id), is_delete=False)
+        except ObjectDoesNotExist:
+            return Response({'STATUS': 'ONE OR MORE PRODUCT IN THE LIST DOES NOT EXIST'},
                             status=status.HTTP_404_NOT_FOUND)
+
         combo_relation = Combo(combo=new_combo, product=product, quantity=combo['quantity'][product_id])
         combo_relation.save()
-    return Response({'status': 'created new combo'}, status=status.HTTP_200_OK)
+    return Response({'STATUS': 'CREATED NEW COMBO'}, status=status.HTTP_200_OK)
 
 
 def view_all_combos():

@@ -42,25 +42,6 @@ class Combo(models.Model):
     quantity = models.IntegerField()
 
 
-class Orders(models.Model):
-    """
-        This model stores all the single orders as well as the orders
-        from subscriptions of a user.
-    """
-    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
-    is_subscription = models.BooleanField(default=False)
-    customer_order_id = models.BigIntegerField()
-    payment_type_choices = (
-        ('C', 'CASH ON DELIVERY'),
-        ('N', 'NET BANKING'),
-        ('U', 'UPI'),
-        ('D', 'DEBIT/CREDIT CARDS')
-    )
-    payment_type = models.CharField(max_length=1, choices=payment_type_choices, default='C')
-    payment_status = models.BooleanField(default=False)
-    shipping_status = ArrayField(models.CharField(max_length=50))
-
-
 class CartProducts(models.Model):
     """
         This model stores the products saved by the user in the
@@ -93,3 +74,23 @@ class Subscriptions(models.Model):
     next_order_date = models.DateTimeField(blank=True, null=True)
     last_order_date = models.DateTimeField(blank=True, null=True)
     paid_till = models.DateTimeField(blank=True, null=True)
+
+
+class Orders(models.Model):
+    """
+        This model stores all the single orders as well as the orders
+        from subscriptions of a user.
+    """
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    is_subscription = models.BooleanField(default=False)
+    customer_order_id = models.BigIntegerField()
+    subscription = models.ForeignKey(Subscriptions, on_delete=models.CASCADE)
+    payment_type_choices = (
+        ('C', 'CASH ON DELIVERY'),
+        ('N', 'NET BANKING'),
+        ('U', 'UPI'),
+        ('D', 'DEBIT/CREDIT CARDS')
+    )
+    payment_type = models.CharField(max_length=1, choices=payment_type_choices, default='C')
+    payment_status = models.BooleanField(default=False)
+    shipping_status = ArrayField(models.CharField(max_length=50))
