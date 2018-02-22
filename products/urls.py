@@ -28,4 +28,10 @@ urlpatterns = [
     re_path('^combo/view', views.ComboView.as_view()),
 
     re_path('^cart$', views.CartView.as_view()),
+    re_path('^order/initiate$', views.InitiateOrderCartView.as_view()),
+    re_path('^order/payment/details$', views.OrderPaymentDetailsView.as_view()),
+    re_path('^get/order$', views.GetOrderView.as_view()),
+
+    re_path('^order/initiate/payment$', views.InitiatePaymentView.as_view()),
+    re_path('^callback/by/payment/gateway$', views.CallbackByPaymentGatewayView.as_view()),
 ]

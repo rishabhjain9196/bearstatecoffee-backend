@@ -11,7 +11,7 @@ from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import status
 
-import coffee.settings as st
+import coffee.settings as settings
 from accounts.models import MyUser
 from accounts.serializers import MyUserSerializer, MyUserSignupSerializer
 
@@ -47,7 +47,7 @@ def send_verification_email(token, email):
     :param email: email address of the user.
     :return: It won't return anything
     """
-    url = st.BASE_URL + '/accounts/verify/email/'
+    url = settings.BASE_URL + '/accounts/verify/email/'
     subject = 'Welcome to BearStateCoffee. Verify Your Email.'
     msg = 'Click on the following url to verify your email address.\n '
     msg += url + token + '/'
@@ -67,7 +67,7 @@ def send_reset_password_email(email):
         user.generate_token()
 
         subject = 'Reset Your Password'
-        url = st.BASE_URL + '/accounts/reset/password/'
+        url = settings.BASE_URL + '/accounts/reset/password/'
         msg = 'Click on the following url to reset your password.\n '
         msg += url + user.token + '/'
 
@@ -108,8 +108,8 @@ def get_auth_token(email, password):
     :param password: Password of the user.
     :return: Result of the post request.
     """
-    url = st.BASE_URL + '/o/token/'
-    auth = (st.CLIENT_ID, st.CLIENT_SECRET)
+    url = settings.BASE_URL + '/o/token/'
+    auth = (settings.CLIENT_ID, settings.CLIENT_SECRET)
     payload = {
         'grant_type': 'password',
         'username': email,
@@ -124,8 +124,8 @@ def revoke_auth_token(token):
     :param token: access or refresh token.
     :return: True or False in result param.
     """
-    url = st.BASE_URL + '/o/revoke_token/'
-    auth = (st.CLIENT_ID, st.CLIENT_SECRET)
+    url = settings.BASE_URL + '/o/revoke_token/'
+    auth = (settings.CLIENT_ID, settings.CLIENT_SECRET)
     payload = {
         'token': token
     }

@@ -1,3 +1,6 @@
+import hashlib
+import os
+
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from accounts.models import MyUser
@@ -44,7 +47,10 @@ class Orders(models.Model):
     """
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
     is_subscription = models.BooleanField(default=False)
-    customer_order_id = models.BigIntegerField()
+    customer_order_id = models.CharField(max_length=20, unique=True)
+    is_confirmed = models.BooleanField(default=False)
+    amount_payable = models.FloatField(default=0.00)
+    amount_paid = models.FloatField(default=0.00)
     payment_type_choices = (
         ('C', 'Cash on Delivery'),
         ('N', 'Net Banking'),
@@ -53,7 +59,24 @@ class Orders(models.Model):
     )
     payment_type = models.CharField(max_length=1, choices=payment_type_choices, default='C')
     payment_status = models.BooleanField(default=False)
-    shipping_status = ArrayField(models.CharField(max_length=50))
+    shipping_status = ArrayField(models.CharField(max_length=50), default=[])
+
+    def get_order_id(self, order_type):
+        random_string = order_type + hashlib.sha1(os.urandom(128)).hexdigest()[:14]
+        while True:
+            if Orders.objects.filter(customer_order_id=random_string).first():
+                random_string = order_type + hashlib.sha1(os.urandom(128)).hexdigest()[:14]
+            else:
+                return random_string
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            subscription = kwargs.get('is_subscription', '')
+            if subscription:
+                self.customer_order_id = self.get_order_id('SUBS00')  # This is for subscription based order.
+            else:
+                self.customer_order_id = self.get_order_id('INDV00')  # This is for non-subscription based order.
+        super(Orders, self).save(*args, **kwargs)
 
 
 class CartProducts(models.Model):

@@ -26,7 +26,18 @@ class CartProductSerializer(serializers.ModelSerializer):
         This is for returning serialized cart products items.
     """
     product = ProductSerializer()
+    cost = serializers.FloatField(required=False)
 
     class Meta:
         model = CartProducts
         exclude = ('user',)
+
+
+class OrdersSerializers(serializers.ModelSerializer):
+    """
+        This is for getting the order detials.
+    """
+
+    class Meta:
+        model = Orders
+        fields = '__all__'

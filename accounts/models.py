@@ -22,7 +22,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin, BaseModel):
     """
         This is a User model to create some extra fields.
     """
-    email = models.CharField(max_length=50, unique=True)
+    email = models.EmailField(max_length=50, unique=True)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     phone_number = models.CharField(max_length=15)

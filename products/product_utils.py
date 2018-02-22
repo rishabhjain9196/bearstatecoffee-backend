@@ -1,7 +1,9 @@
+from django.db.models import F, FloatField, ExpressionWrapper
 from rest_framework.response import Response
 from rest_framework import status
-from products.models import Products, Combo, CartProducts
-from products.serializers import ProductSerializer, ComboSerializer, CartProductSerializer
+from products.models import Products, Combo, CartProducts, Orders
+from products.serializers import ProductSerializer, ComboSerializer, CartProductSerializer, OrdersSerializers
+from accounts.utils import send_text_email
 
 
 def add_product(data):
@@ -122,7 +124,7 @@ def add_product_to_cart(user, data):
 
     if product:
         if cart_product and (cart_product.quantity+quantity <= product.avail_quantity):
-            cart_product.quantity+=quantity
+            cart_product.quantity += quantity
             cart_product.save()
             payload = {
                 'result': True,
@@ -149,7 +151,8 @@ def get_the_user_cart(user):
     :param user: user fetched from request.
     :return: True or False with cart products.
     """
-    cart_products = CartProducts.objects.filter(user=user, is_active=True)
+    cart_products = CartProducts.objects.filter(user=user, is_active=True).annotate(
+        cost=ExpressionWrapper(F('quantity')*F('product__cost'), output_field=FloatField()))
     payload = {
         'result': True,
         'data': CartProductSerializer(instance=cart_products, many=True).data
@@ -177,3 +180,131 @@ def remove_from_cart(user, cart_product_id, quantity):
     else:
         return Response({'result': False, 'message': 'Product doesn\'t exist in cart.'},
                         status=status.HTTP_400_BAD_REQUEST)
+
+
+def initiate_order_from_cart(user):
+    """
+        This will just initiate the order for the user.
+    :param user: User fetched from request.
+    :return: True or false, with Customer_ID.
+    """
+    cart_products = CartProducts.objects.filter(user=user, is_active=True,
+                                                product__avail_quantity__gte=F('quantity')).annotate(
+        cost=ExpressionWrapper(F('quantity') * F('product__cost'), output_field=FloatField()))
+    cost = 0
+
+    if len(cart_products) == 0:
+        return Response({'result': False, 'message': 'Cart products not available to buy.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    for product in cart_products:
+        cost += product.cost
+        product.product.avail_quantity -= product.quantity
+        product.product.save()
+
+    order = Orders.objects.create(user=user, is_subscription=False, amount_payable=cost)
+
+    payload = {
+        'result': True,
+        'data': {
+            'cart_products': CartProductSerializer(instance=cart_products, many=True).data,
+            'order': OrdersSerializers(instance=order).data,
+            'total_cost': cost
+        }
+    }
+    cart_products.update(order=order, is_active=False)
+
+    return Response(payload, status=status.HTTP_200_OK)
+
+
+def send_mail_on_order_confirmation(customer_order_id):
+    """
+        Helper Function to send the email to user for their confirmed user.
+    :param customer_order_id:
+    :return:
+    """
+    order = Orders.objects.filter(customer_order_id=customer_order_id).first()
+    if order.is_subscription:
+        pass
+    else:
+        body = 'Your order is confirmed amounting to ' + str(order.amount_payable) + ' with Customer Order Id ' + str(
+            customer_order_id) + '.\n'
+        cart_products = order.cartproducts_set.all()
+        body += 'Product      Quantity      Price\n'
+        for product in cart_products:
+            body += '%s      %s      %s\n' % (
+                product.product.name, str(product.quantity), str(product.quantity * product.product.cost))
+        subject = 'Your Order is Confirmed.'
+        send_text_email(body=body, subject=subject, to_address=product.user.email)
+
+
+def initiate_payment(data):
+    """
+        This will update the payment details and initiate payment if necessary.
+    :param user: User fetched from request.
+    :param data: It must have cust_order_id, payment_type.
+    :return: True or false, with Customer_ID.
+    """
+    payment_type = data.get('payment_type', '')
+    customer_order_id = data.get('customer_order_id', '')
+    if payment_type and customer_order_id:
+        if payment_type == 'C':
+            Orders.objects.filter(customer_order_id=customer_order_id).update(is_confirmed=True,
+                                                                              payment_type=payment_type)
+            send_mail_on_order_confirmation(customer_order_id)
+        else:
+            Orders.objects.filter(customer_order_id=customer_order_id).update(payment_type=payment_type)
+
+        payload = {
+            'result': True
+        }
+        return Response(payload, status=status.HTTP_200_OK)
+    else:
+        return Response({'result': False, 'message': 'customer_order_id or payment_type missing'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+
+def confirm_order(data):
+    """
+        Helper function to be called as the response against the callback of the payment gateway.
+    :param data: It must contains customer_order_id, amount_paid, payment_status.
+    :return: True or false, with desired response.
+    """
+    customer_order_id = data.get('customer_order_id', '')
+    amount_paid = data.get('amount_paid', '')
+    payment_status = data.get('payment_status', '')
+
+    if payment_status and customer_order_id and amount_paid:
+        if payment_status == 'CONFIRMED':
+            print('dsfjdsfhjsd')
+            Orders.objects.filter(customer_order_id=customer_order_id).update(amount_paid=amount_paid,
+                                                                              payment_status=True,
+                                                                              is_confirmed=True)
+            send_mail_on_order_confirmation(customer_order_id)
+        else:
+            order = Orders.objects.filter(customer_order_id=customer_order_id).first()
+            cart_products = order.cartproducts_set.all()
+
+            for product in cart_products:
+                product.product.avail_quantity += product.quantity
+                product.product.save()
+
+            order.payment_status = payment_status
+            order.save()
+        return Response({'result': True}, status=status.HTTP_200_OK)
+    else:
+        return Response({'result': False, 'message': 'customer_order_id or payment_status or amount_paid missing'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+
+def get_order_of_user(user):
+    """
+        This will fetch the order list of user.
+    :param user:
+    :return:
+    """
+    payload = {
+        'result': True,
+        'data': OrdersSerializers(instance=Orders.objects.filter(user=user), many=True).data
+    }
+    return Response(payload, status=status.HTTP_200_OK)
