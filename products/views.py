@@ -225,6 +225,6 @@ class CheckSubscriptions(APIView):
 
     def get(self, request):
         """
-        :return: Returns all subscriptions that have their nex order in a week.
+        :return: Returns all subscriptions that have their next order in a week and pushes them into the order table.
         """
         return subscription_utils.new_orders_from_subscription()

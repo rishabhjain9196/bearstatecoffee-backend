@@ -40,7 +40,7 @@ def update_product(data, key):
     try:
         product = Products.objects.get(pk=key, is_delete=False)
     except ObjectDoesNotExist:
-        return Response({'STATUS': 'PRODUCT DOES NOT EXIST'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': 'The product being updated does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
     valid_fields = ['name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
                     'is_delete']
@@ -48,7 +48,7 @@ def update_product(data, key):
         if field in valid_fields:
             setattr(product, field, data[field])
     product.save()
-    return Response({'STATUS': 'UPDATED'}, status=status.HTTP_200_OK)
+    return Response({'status': 'The product was successfully updated.'}, status=status.HTTP_200_OK)
 
 
 def delete_product(key):
@@ -60,11 +60,11 @@ def delete_product(key):
     try:
         product = Products.objects.get(pk=key, is_delete=False)
     except ObjectDoesNotExist:
-        return Response({'STATUS': 'PRODUCT DOES NOT EXIST'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'The product being deleted does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
 
     setattr(product, 'is_delete', True)
     product.save()
-    return Response({'STATUS': 'DELETED'}, status=status.HTTP_200_OK)
+    return Response({'status': 'The product was successfully deleted.'}, status=status.HTTP_200_OK)
 
 
 def create_combo(combo):
@@ -78,14 +78,16 @@ def create_combo(combo):
     for products in combo.get('quantity'):
         total_quantity = total_quantity + combo.get('quantity').get(products)
     if total_quantity < 2:
-        return Response({'STATUS': 'NUMBER OF PRODUCTS MUST AT LEAST BE TWO.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'The total quantities of products in a combo must at least be two.'},
+                        status=status.HTTP_400_BAD_REQUEST)
     combo_name = combo.get('name')
     combo_image = combo.get('image', '')
     combo_cost = combo.get('cost')
     combo_avail_quantity = combo.get('avail_quantity', 1)
     combo_desc = combo.get('desc', '')
     if not combo_name or not combo_cost:
-        return Response({'STATUS': 'NAME AND COST ARE REQUIRED'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'Name and Cost are necessary to add a combo.'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     new_combo = Products.objects.create(name=combo_name, image=combo_image,
                                         cost=combo_cost, avail_quantity=combo_avail_quantity,
@@ -97,12 +99,12 @@ def create_combo(combo):
         try:
             product = Products.objects.get(pk=int(product_id), is_delete=False)
         except ObjectDoesNotExist:
-            return Response({'STATUS': 'ONE OR MORE PRODUCT IN THE LIST DOES NOT EXIST'},
+            return Response({'status': 'One or more Product in the Combo does not exist.'},
                             status=status.HTTP_404_NOT_FOUND)
 
         combo_relation = Combo(combo=new_combo, product=product, quantity=combo['quantity'][product_id])
         combo_relation.save()
-    return Response({'STATUS': 'CREATED NEW COMBO'}, status=status.HTTP_200_OK)
+    return Response({'status': 'The combo was created successfully.'}, status=status.HTTP_200_OK)
 
 
 def view_all_combos():

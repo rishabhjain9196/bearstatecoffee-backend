@@ -15,7 +15,7 @@ def add_subscription(user, data):
     :return: Response whether the subscription was successfully added(status=200) or not(status=404).
     """
     if not user:
-        return Response({'STATUS': 'USER NOT FOUND'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': 'The user does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
     valid_fields = ['product_id', 'category_id', 'quantity']
     product_exists = False
@@ -26,20 +26,23 @@ def add_subscription(user, data):
         elif element == valid_fields[1]:
             category_exist = True
         else:
-            return Response({'STATUS': 'INVALID_DATA'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'Invalid fields are passed to add subscription'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
     if not product_exists or not category_exist:
-        return Response({'STATUS': 'INVALID DATA'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'Product and Category are required fields to add a subscription'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     # Check whether category option is available in product
     try:
         product = Products.objects.get(pk=data[valid_fields[0]], category_ids=data[valid_fields[1]])
     except ObjectDoesNotExist:
-        return Response({'STATUS': 'INVALID CATEGORY OPTION'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'The selected category is not available for this product.'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     new_subscription = Subscriptions.objects.create(user=user, **data)
     new_subscription.save()
-    return Response({'STATUS': 'SUBSCRIPTION SAVED'}, status=status.HTTP_200_OK)
+    return Response({'status': 'The subscription was successfully added.'}, status=status.HTTP_200_OK)
 
 
 def view_subscription(pk):
@@ -62,10 +65,10 @@ def finalize_subscription(subscription_id, data):
     try:
         sub = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
-        return Response({'STATUS': 'SUBSCRIPTION DOES NOT EXIST'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'This subscription does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
 
     if sub.status == 'A':
-        return Response({'STATUS': 'SUBSCRIPTION IS ALREADY ACTIVE'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'This subscription is already active.'}, status=status.HTTP_400_BAD_REQUEST)
 
     date_format = "%d-%m-%Y"
     valid_fields = ['next_order_date', 'last_order_date', 'paid_till']
@@ -77,7 +80,7 @@ def finalize_subscription(subscription_id, data):
     setattr(sub, 'start_date', datetime.now())
     sub.save()
 
-    return Response({'STATUS': 'SUBSCRIPTION FINALIZED'}, status=status.HTTP_200_OK)
+    return Response({'status': 'This subscription has been successfully finalized.'}, status=status.HTTP_200_OK)
 
 
 def get_days_from_category_id(key):
@@ -88,7 +91,7 @@ def get_days_from_category_id(key):
     try:
         category = Categories.objects.get(pk=key)
     except ObjectDoesNotExist:
-        return {'STATUS': False}
+        return {'status': False}
     number_of_days = category.period_number
     multiplier = 1
     if category.period_name == 'week':
@@ -97,7 +100,7 @@ def get_days_from_category_id(key):
         multiplier = 30
 
     number_of_days = number_of_days * multiplier
-    return {'STATUS': True, 'data': number_of_days}
+    return {'status': True, 'data': number_of_days}
 
 
 def insert_into_order_from_subscription(subscription_id, payment_status, payment_type):
@@ -112,12 +115,12 @@ def insert_into_order_from_subscription(subscription_id, payment_status, payment
     try:
         subscription = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
-        return {'STATUS': False}
+        return {'status': False}
     new_order = Orders.objects.create(user_id=subscription.user_id, is_subscription=True,
                                       subscription_id=subscription_id, payment_type=payment_type,
                                       payment_status=payment_status)
     new_order.save()
-    return {'STATUS': True}
+    return {'status': True}
 
 
 def new_orders_from_subscription():
@@ -142,10 +145,10 @@ def new_orders_from_subscription():
                 payment_type = 'C'
 
             result = insert_into_order_from_subscription(obj.id, payment_status, payment_type)
-            if result['STATUS']:
+            if result['status']:
                 previous_order = obj.next_order_date
                 periodicity = get_days_from_category_id(obj.category_id)
-                if periodicity['STATUS']:
+                if periodicity['status']:
                     next_order_date = previous_order + timedelta(days=periodicity['data'])
 
                     if next_order_date > obj.last_order_date:
@@ -168,16 +171,18 @@ def shift_subscription(subscription_id, next_order_date):
     try:
         subscription = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
-        return Response({'STATUS': 'SUBSCRIPTION DOES NOT EXIST'})
+        return Response({'status': 'This subscription does not exist. '})
 
     date_format = "%d-%m-%Y"
     next_order_date = datetime.strptime(next_order_date, date_format)
 
     if datetime.now() + timedelta(days=1) > next_order_date:
-        return Response({'STATUS': 'DATE HAS TO BE AT LEAST A DAY FROM TODAY'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'The new order date has to be at least 1 day ahead of today.'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     if subscription.status != 'A':
-        return Response({'STATUS': 'SUBSCRIPTION IS NOT ACTIVE'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'This subscription is not currently active.'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     setattr(subscription, 'last_order_date', next_order_date + timedelta(days=
             (subscription.last_order_date.date() - subscription.next_order_date.date()).days))
@@ -186,7 +191,7 @@ def shift_subscription(subscription_id, next_order_date):
     setattr(subscription, 'next_order_date', next_order_date)
 
     subscription.save()
-    return Response({'STATUS': 'SHIFTED SUBSCRIPTION'}, status=status.HTTP_200_OK)
+    return Response({'status': 'The subscription was successfully shifted.'}, status=status.HTTP_200_OK)
 
 
 def cancel_subscription(subscription_id):
@@ -197,10 +202,10 @@ def cancel_subscription(subscription_id):
     try:
         subscription = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
-        return Response({'STATUS': 'SUBSCRIPTION DOES NOT EXIST'})
+        return Response({'status': 'This subscription does not exist.'})
 
     if subscription.status == 'A':
         setattr(subscription, 'status', 'C')
         subscription.save()
-        return Response({'STATUS': 'SUBSCRIPTION HAS BEEN CANCELLED.'}, status=status.HTTP_200_OK)
-    return Response({'STATUS': 'SUBSCRIPTION CANNOT BE CANCELLED.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'The subscription has been cancelled.'}, status=status.HTTP_200_OK)
+    return Response({'status': 'The subscription cannot be cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
