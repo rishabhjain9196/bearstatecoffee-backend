@@ -2,6 +2,7 @@ from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from products import product_utils, categories_util
+import products.constants as const
 
 
 class ProductsView(APIView):
@@ -129,7 +130,7 @@ class CartView(APIView):
         quantity = request.data.get('quantity', '')
 
         if not (cart_product_id and quantity):
-            return Response({'result': False, 'message': 'product_id or quantity missing.'},
+            return Response({'result': False, 'message': const.CART_VALIDATION},
                             status=status.HTTP_400_BAD_REQUEST)
 
         return product_utils.remove_from_cart(request.user, cart_product_id, quantity)
@@ -145,16 +146,6 @@ class InitiateOrderCartView(APIView):
         return product_utils.initiate_order_from_cart(request.user)
 
 
-class OrderPaymentDetailsView(APIView):
-    """
-        This will get the sufficient details for initiating payment.
-    """
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def post(self, request):
-        return product_utils.update_order_payment_details(request.user, request.data)
-
-
 class InitiatePaymentView(APIView):
     """
         This will help in initiating the payment.
@@ -167,12 +158,12 @@ class InitiatePaymentView(APIView):
 
 class CallbackByPaymentGatewayView(APIView):
     """
-        This will be the callback recieved by the payment gateway to confirm the payment.
+        This will be the callback received by the payment gateway to confirm the payment.
     """
     permission_classes = ()
 
     def post(self, request):
-        return product_utils.confirm_order(request.data)
+        return product_utils.confirm_payment(request.data)
 
 
 class GetOrderView(APIView):

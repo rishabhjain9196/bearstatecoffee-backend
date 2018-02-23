@@ -5,6 +5,7 @@ from rest_framework import permissions, status
 from accounts.serializers import MyUserUpdateSerializer, MyUserSerializer
 from accounts.utils import verify_email, register_user, login_user, revoke_auth_token, reset_password_form,\
     reset_password, send_reset_password_email
+import accounts.constants as const
 
 # Create your views here.
 
@@ -48,7 +49,8 @@ class ResetPasswordSendMailView(APIView):
     def post(self, request):
         email = request.data.get('email', '')
         if not email:
-            return Response({'result': False, 'message': 'Email not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'result': False, 'message': const.RESET_PASSWORD_DATA_VALIDATION},
+                            status=status.HTTP_400_BAD_REQUEST)
         return send_reset_password_email(email)
 
 
@@ -74,7 +76,7 @@ class ResetPasswordMailView(APIView):
         if _password and _confirmed_password and _password == _confirmed_password:
             return reset_password(token, _password)
 
-        return Response({'result': False, 'message': "Password doesn't match"})
+        return Response({'result': False, 'message': const.RESET_PASSWORD_VALIDATION})
 
 
 class ChangePasswordView(APIView):
@@ -93,9 +95,9 @@ class ChangePasswordView(APIView):
                 user.check_password(previous_password):
             user.set_password(password)
             user.save()
-            return Response({'result': True, 'data': 'Password Changed Successfully'})
+            return Response({'result': True, 'data': const.PASSWORD_RESET_SUCCESS})
 
-        return Response({'result': False, 'message': 'Password does not matches.'})
+        return Response({'result': False, 'message': const.RESET_PASSWORD_VALIDATION})
 
 
 class LoginView(APIView):
@@ -111,7 +113,7 @@ class LoginView(APIView):
         if email and password:
             return login_user(email, password)
 
-        return Response({'result': False, 'message': 'Missing Email or Password'})
+        return Response({'result': False, 'message': const.LOGIN_VALIDATION})
 
 
 class LogoutView(APIView):
@@ -147,6 +149,6 @@ class UserDetailsView(APIView):
             for key, value in serialized_data.validated_data.items():
                 setattr(user, key, value)
             user.save()
-            return Response({'result': True, 'data': 'Updated Successfully.'})
+            return Response({'result': True, 'data': const.SUCCESS_MESSAGE})
         else:
-            return Response({'result': False, 'message': 'Invalid data.'})
+            return Response({'result': False, 'data': serialized_data.errors})

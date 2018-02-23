@@ -1,9 +1,11 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F, FloatField, ExpressionWrapper
 from rest_framework.response import Response
 from rest_framework import status
 from products.models import Products, Combo, CartProducts, Orders
 from products.serializers import ProductSerializer, ComboSerializer, CartProductSerializer, OrdersSerializers
 from accounts.utils import send_text_email
+import products.constants as const
 
 
 def add_product(data):
@@ -116,33 +118,34 @@ def add_product_to_cart(user, data):
     quantity = data.get('quantity')
 
     if not (product_id and quantity):
-        return Response({'result': False, 'message': 'product_id or quantity missing.'},
+        return Response({'result': False, 'message': const.ADD_TO_CART_VALIDATION},
                         status=status.HTTP_400_BAD_REQUEST)
 
-    product = Products.objects.filter(id=product_id, is_delete=False).first()
+    try:
+        product = Products.objects.get(pk=product_id, is_delete=False)
+    except ObjectDoesNotExist:
+        return Response({'result': False, 'message': const.INVALID_PRODUCT}, status=status.HTTP_400_BAD_REQUEST)
+
     cart_product = CartProducts.objects.filter(user=user, product=product, is_active=True).first()
 
-    if product:
-        if cart_product and (cart_product.quantity+quantity <= product.avail_quantity):
-            cart_product.quantity += quantity
-            cart_product.save()
-            payload = {
-                'result': True,
-                'data': CartProductSerializer(instance=cart_product).data
-            }
-            return Response(payload)
-        elif product.avail_quantity >= quantity:
-            cart_product = CartProducts.objects.create(user=user, product=product, quantity=quantity)
-            payload = {
-                'result': True,
-                'data': CartProductSerializer(instance=cart_product).data
-            }
-            return Response(payload)
-        else:
-            return Response({'result': False, 'message': 'Available quantity is '+str(quantity)},
-                            status=status.HTTP_400_BAD_REQUEST)
+    if cart_product and (cart_product.quantity+quantity <= product.avail_quantity):
+        cart_product.quantity += quantity
+        cart_product.save()
+        payload = {
+            'result': True,
+            'data': CartProductSerializer(instance=cart_product).data
+        }
+        return Response(payload)
+    elif product.avail_quantity >= quantity:
+        cart_product = CartProducts.objects.create(user=user, product=product, quantity=quantity)
+        payload = {
+            'result': True,
+            'data': CartProductSerializer(instance=cart_product).data
+        }
+        return Response(payload)
     else:
-        return Response({'result': False, 'message': 'No product found'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'result': False, 'message': const.AVAILABLE_QUANTITY + str(quantity)},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 def get_the_user_cart(user):
@@ -176,9 +179,9 @@ def remove_from_cart(user, cart_product_id, quantity):
         if cart_product.quantity <= 0:
             cart_product.is_active = False
         cart_product.save()
-        return Response({'result': True, 'data': 'Removed'})
+        return Response({'result': True, 'data': const.PRODUCT_REMOVED})
     else:
-        return Response({'result': False, 'message': 'Product doesn\'t exist in cart.'},
+        return Response({'result': False, 'message': const.INVALID_PRODUCT_CART},
                         status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -194,7 +197,7 @@ def initiate_order_from_cart(user):
     cost = 0
 
     if len(cart_products) == 0:
-        return Response({'result': False, 'message': 'Cart products not available to buy.'},
+        return Response({'result': False, 'message': const.QUANTITY_NOT_AVAILABLE},
                         status=status.HTTP_400_BAD_REQUEST)
 
     for product in cart_products:
@@ -227,14 +230,12 @@ def send_mail_on_order_confirmation(customer_order_id):
     if order.is_subscription:
         pass
     else:
-        body = 'Your order is confirmed amounting to ' + str(order.amount_payable) + ' with Customer Order Id ' + str(
-            customer_order_id) + '.\n'
+        body = const.ORDER_CONFIRMATION_EMAIL_BODY % (str(order.amount_payable), str(customer_order_id))
         cart_products = order.cartproducts_set.all()
-        body += 'Product      Quantity      Price\n'
         for product in cart_products:
-            body += '%s      %s      %s\n' % (
+            body += const.ORDER_CONFIRMATION_EMAIL_BODY_PRODUCTS % (
                 product.product.name, str(product.quantity), str(product.quantity * product.product.cost))
-        subject = 'Your Order is Confirmed.'
+        subject = const.ORDER_CONFIRMATION_EMAIL_SUBJECT
         send_text_email(body=body, subject=subject, to_address=product.user.email)
 
 
@@ -260,11 +261,11 @@ def initiate_payment(data):
         }
         return Response(payload, status=status.HTTP_200_OK)
     else:
-        return Response({'result': False, 'message': 'customer_order_id or payment_type missing'},
+        return Response({'result': False, 'message': const.INITIATE_PAYMENT_VALIDATION},
                         status=status.HTTP_400_BAD_REQUEST)
 
 
-def confirm_order(data):
+def confirm_payment(data):
     """
         Helper function to be called as the response against the callback of the payment gateway.
     :param data: It must contains customer_order_id, amount_paid, payment_status.
@@ -276,7 +277,6 @@ def confirm_order(data):
 
     if payment_status and customer_order_id and amount_paid:
         if payment_status == 'CONFIRMED':
-            print('dsfjdsfhjsd')
             Orders.objects.filter(customer_order_id=customer_order_id).update(amount_paid=amount_paid,
                                                                               payment_status=True,
                                                                               is_confirmed=True)
@@ -293,15 +293,15 @@ def confirm_order(data):
             order.save()
         return Response({'result': True}, status=status.HTTP_200_OK)
     else:
-        return Response({'result': False, 'message': 'customer_order_id or payment_status or amount_paid missing'},
+        return Response({'result': False, 'message': const.PAYMENT_CONFIRMATION_VALIDATION},
                         status=status.HTTP_400_BAD_REQUEST)
 
 
 def get_order_of_user(user):
     """
         This will fetch the order list of user.
-    :param user:
-    :return:
+    :param user: User fetched from request.
+    :return: List of orders will be returned.
     """
     payload = {
         'result': True,
