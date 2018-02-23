@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework import status
 
+from accounts.utils import send_text_email
 from products.constants import *
 from products.models import Subscriptions, Products, Categories, Orders
 from products.serializers import SubscriptionSerializer
