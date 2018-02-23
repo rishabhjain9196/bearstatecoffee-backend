@@ -40,6 +40,14 @@ urlpatterns = [
     # Shift Subscription (PATCH)
     re_path('^shift/subscription$', views.Subscription.as_view()),
     # Cancel Subscription (DELETE)
-    re_path('^cancel/subscription$', views.Subscription.as_view())
+    re_path('^cancel/subscription$', views.Subscription.as_view()),
 
+    re_path('^cart$', views.CartView.as_view()),
+    re_path('^order/initiate$', views.InitiateOrderCartView.as_view()),
+    re_path('^get/order$', views.GetOrderView.as_view()),
+    re_path('^order/cancel$', views.CancelOrderView.as_view()),
+    re_path('^order/view/all$', views.ViewAllOrders.as_view()),
+
+    re_path('^order/initiate/payment$', views.InitiatePaymentView.as_view()),
+    re_path('^callback/by/payment/gateway$', views.CallbackByPaymentGatewayView.as_view()),
 ]

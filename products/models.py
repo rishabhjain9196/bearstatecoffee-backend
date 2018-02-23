@@ -1,3 +1,6 @@
+import hashlib
+import os
+
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from accounts.models import MyUser
@@ -48,21 +51,6 @@ class Combo(models.Model):
     quantity = models.IntegerField()
 
 
-class CartProducts(models.Model):
-    """
-        This model stores the products saved by the user in the
-        cart.
-    """
-    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
-    product = models.ForeignKey(Products, on_delete=models.CASCADE)
-    added_on = models.DateTimeField(auto_now_add=True)
-    quantity = models.IntegerField()
-    is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.product.name
-
-
 class Subscriptions(models.Model):
     """
         This model stores the subscriptions of the all the users.
@@ -92,14 +80,52 @@ class Orders(models.Model):
     """
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
     is_subscription = models.BooleanField(default=False)
-    customer_order_id = models.BigIntegerField(null=True, blank=True)
+    customer_order_id = models.CharField(max_length=20, unique=True, default='DEFAULT')
+    is_confirmed = models.BooleanField(default=False)
+    is_cancelled = models.BooleanField(default=False)
+    cancelled_by = models.ForeignKey(MyUser, related_name='cancelled', on_delete=models.CASCADE, blank=True, null=True)
+    amount_payable = models.FloatField(default=0.00)
+    amount_paid = models.FloatField(default=0.00)
     subscription = models.ForeignKey(Subscriptions, on_delete=models.CASCADE, default=None, blank=True)
     payment_type_choices = (
-        ('C', 'CASH ON DELIVERY'),
-        ('N', 'NET BANKING'),
+        ('C', 'Cash on Delivery'),
+        ('N', 'Net Banking'),
         ('U', 'UPI'),
-        ('D', 'DEBIT/CREDIT CARDS')
+        ('D', 'Debit/Credit Cards')
     )
     payment_type = models.CharField(max_length=1, choices=payment_type_choices, default='C')
     payment_status = models.BooleanField(default=False)
-    shipping_status = ArrayField(models.CharField(max_length=50), blank=True, null=True)
+    shipping_status = ArrayField(models.CharField(max_length=50), default=[])
+
+    def get_order_id(self, order_type):
+        random_string = order_type + hashlib.sha1(os.urandom(128)).hexdigest()[:14]
+        while True:
+            if Orders.objects.filter(customer_order_id=random_string).first():
+                random_string = order_type + hashlib.sha1(os.urandom(128)).hexdigest()[:14]
+            else:
+                return random_string
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            subscription = kwargs.get('is_subscription', '')
+            if subscription:
+                self.customer_order_id = self.get_order_id('SUBS00')  # This is for subscription based order.
+            else:
+                self.customer_order_id = self.get_order_id('INDV00')  # This is for non-subscription based order.
+        super(Orders, self).save(*args, **kwargs)
+
+
+class CartProducts(models.Model):
+    """
+        This model stores the products saved by the user in the
+        cart.
+    """
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    order = models.ForeignKey(Orders, on_delete=models.CASCADE, blank=True, null=True)
+    added_on = models.DateTimeField(auto_now_add=True)
+    quantity = models.IntegerField()
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.product.name

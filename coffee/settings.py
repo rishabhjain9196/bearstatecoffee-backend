@@ -25,7 +25,7 @@ SECRET_KEY = 'w+caadbmftmhyi3*cdb#vp_k$5#w47-s^ucvb*&qjgljpa_$$*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.100.101', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -154,3 +154,5 @@ OAUTH2_PROVIDER = {
     # this is the list of available scopes
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'}
 }
+
+BASE_URL = 'http://127.0.0.1:8000'
