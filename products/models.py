@@ -14,6 +14,10 @@ class Categories(models.Model):
     period_number = models.IntegerField()
     period_name = models.CharField(max_length=100)
     terms = models.CharField(max_length=5000)
+    is_delete = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.period_number) + " " + str(self.period_name)
 
 
 class Products(models.Model):
@@ -33,11 +37,40 @@ class Products(models.Model):
     category_ids = models.ManyToManyField("Categories")
     is_delete = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.name
+
 
 class Combo(models.Model):
+    """
+        This model is to add extra field - quantity to the many to many relationship
+        of combos with products.
+    """
     combo = models.ForeignKey(Products, related_name="combo_combo_id", on_delete=models.CASCADE)
     product = models.ForeignKey(Products, related_name="quantity", on_delete=models.CASCADE)
     quantity = models.IntegerField()
+
+
+class Subscriptions(models.Model):
+    """
+        This model stores the subscriptions of the all the users.
+    """
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+    start_date = models.DateTimeField(blank=True, null=True)
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    status_choices = (
+        ('A', 'ACTIVE'),
+        ('P', 'PAUSED'),
+        ('C',  'CANCELLED'),
+        ('F', 'FINISHED'),
+        ('I', 'INACTIVE')
+    )
+    status = models.CharField(max_length=1, choices=status_choices, default='I')
+    next_order_date = models.DateTimeField(blank=True, null=True)
+    last_order_date = models.DateTimeField(blank=True, null=True)
+    paid_till = models.DateTimeField(blank=True, null=True, default=None)
 
 
 class Orders(models.Model):
@@ -47,12 +80,13 @@ class Orders(models.Model):
     """
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
     is_subscription = models.BooleanField(default=False)
-    customer_order_id = models.CharField(max_length=20, unique=True)
+    customer_order_id = models.CharField(max_length=20, unique=True, default='DEFAULT')
     is_confirmed = models.BooleanField(default=False)
     is_cancelled = models.BooleanField(default=False)
     cancelled_by = models.ForeignKey(MyUser, related_name='cancelled', on_delete=models.CASCADE, blank=True, null=True)
     amount_payable = models.FloatField(default=0.00)
     amount_paid = models.FloatField(default=0.00)
+    subscription = models.ForeignKey(Subscriptions, on_delete=models.CASCADE, default=None, blank=True)
     payment_type_choices = (
         ('C', 'Cash on Delivery'),
         ('N', 'Net Banking'),
@@ -93,22 +127,5 @@ class CartProducts(models.Model):
     quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)
 
-
-class Subscriptions(models.Model):
-    """
-        This model stores the subscriptions of the all the users.
-    """
-    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
-    product = models.ForeignKey(Products, on_delete=models.CASCADE)
-    order = models.ForeignKey(Orders, on_delete=models.CASCADE)
-    start_date = models.DateTimeField()
-    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
-    status_choices = (
-        ('A', 'ACTIVE'),
-        ('P', 'PAUSED'),
-        ('C',  'CANCELLED'),
-        ('F', 'FINISHED')
-    )
-    status = models.CharField(max_length=1, choices=status_choices, default='A')
-    next_order_date = models.DateTimeField()
-    last_order_date = models.DateTimeField()
+    def __str__(self):
+        return self.product.name
