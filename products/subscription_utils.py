@@ -71,6 +71,9 @@ def finalize_subscription(subscription_id, data):
     if sub.status == 'A':
         return Response({'status': SUBSCRIPTION_ACTIVE}, status=status.HTTP_400_BAD_REQUEST)
 
+    if sub.product is None or sub.product.is_delete:
+        return Response({'status': PRODUCT_NOT_FOUND}, status=status.HTTP_400_BAD_REQUEST)
+
     date_format = "%d-%m-%Y"
     valid_fields = ['next_order_date', 'last_order_date', 'paid_till']
     for element in data:
@@ -93,6 +96,7 @@ def get_days_from_category_id(key):
         category = Categories.objects.get(pk=key)
     except ObjectDoesNotExist:
         return {'status': False}
+
     number_of_days = category.period_number
     multiplier = 1
     if category.period_name == 'week':
@@ -111,16 +115,28 @@ def insert_into_order_from_subscription(subscription_id, payment_status, payment
     :param payment_type: Payment type for the order
     :param payment_status: Payment status of the order
     :return: Successful or unsuccessful status depending on whether the order was placed
-
     """
+
     try:
         subscription = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
-        return {'status': False}
+        return {'status': SUBSCRIPTION_NOT_FOUND}
 
-    product_cost = Subscriptions.objects.get(pk=subscription_id).product.cost
+    try:
+        product = Subscriptions.objects.get(pk=subscription_id).product
+        if product.is_delete:
+            return {'status': PRODUCT_NOT_FOUND}
+    except ObjectDoesNotExist:
+        return {'status': PRODUCT_NOT_FOUND}
+
+    if product.avail_quantity < subscription.quantity:
+        return {'status': 'False'}
+
+    product.avail_quantity = product.avail_quantity - subscription.quantity
+    product.save()
+
     if payment_status:
-        cost_paid = product_cost
+        cost_paid = product.cost
     else:
         cost_paid = 0
 
@@ -128,7 +144,7 @@ def insert_into_order_from_subscription(subscription_id, payment_status, payment
                                       subscription_id=subscription_id, payment_type=payment_type,
                                       payment_status=payment_status)
     new_order.save()
-    return {'status': True}
+    return {'status': 'True'}
 
 
 def new_orders_from_subscription():
@@ -140,34 +156,63 @@ def new_orders_from_subscription():
     next_week_subscriptions = Subscriptions.objects.filter(status='A').\
         filter(next_order_date__range=[today, today + timedelta(days=7)])
 
+    shifted_subscriptions = []
+    cancelled_subscriptions = []
     for obj in next_week_subscriptions:
         if obj.next_order_date > obj.last_order_date:
             setattr(obj, 'status', 'F')
         else:
 
-            if obj.paid_till >= obj.next_order_date:
+            if obj.paid_till is None:
+                payment_status = False
+                payment_type = 'C'
+            elif obj.paid_till >= obj.next_order_date:
                 payment_status = True
                 payment_type = 'N'
             else:
                 payment_status = False
                 payment_type = 'C'
 
-            result = insert_into_order_from_subscription(obj.id, payment_status, payment_type)
-            if result['status']:
-                previous_order = obj.next_order_date
-                periodicity = get_days_from_category_id(obj.category_id)
-                if periodicity['status']:
-                    next_order_date = previous_order + timedelta(days=periodicity['data'])
+            periodicity = get_days_from_category_id(obj.category_id)
+            if periodicity['status']:
+                result = insert_into_order_from_subscription(obj.id, payment_status, payment_type)
 
+                if result['status'] == 'True':
+                    # TODO Inform user of the order placed.
+                    previous_order = obj.next_order_date
+                    next_order_date = previous_order + timedelta(days=periodicity['data'])
                     if next_order_date > obj.last_order_date:
                         setattr(obj, 'status', 'F')
                     else:
                         setattr(obj, 'next_order_date', next_order_date)
+                    obj.save()
 
-        obj.save()
+                elif result['status'] == 'False':
+                    # Here the quantity of the product is not available, so the subscription is automatically shifted,
+                    # to the next date.
+                    # TODO Inform user of the shifting of subscription due non-availability of product.
+                    shifted_subscriptions.append(obj.id)
+                    next_date = obj.next_order_date + timedelta(days=periodicity['data'])
+                    next_date = next_date.strftime('%d-%m-%Y')
+                    shift_subscription(obj.id, next_date)
+
+                elif result['status'] == PRODUCT_NOT_FOUND:
+                    # The product itself has been discontinued.
+                    # TODO Inform user for the cancellation of the subscription due to removal of product.
+                    cancelled_subscriptions.append(obj.id)
+                    cancel_subscription(obj.id)
+
+            else:
+                # If and when the selected periodicity for a product is removed from the admin,
+                # or is no longer provided by the merchant or so, then all the subscriptions
+                # with that product and that periodicity will be cancelled.
+                # TODO Inform user for the cancellation of the subscription due to removal of category option of that
+                # TODO product.
+                cancelled_subscriptions.append(obj.id)
+                cancel_subscription(obj.id)
 
     serialized = SubscriptionSerializer(next_week_subscriptions, many=True)
-    return Response(serialized.data)
+    return Response({'cancelled': cancelled_subscriptions, 'shifted': shifted_subscriptions, 'data': serialized.data})
 
 
 def shift_subscription(subscription_id, next_order_date):
@@ -181,21 +226,22 @@ def shift_subscription(subscription_id, next_order_date):
     except ObjectDoesNotExist:
         return Response({'status': SUBSCRIPTION_NOT_FOUND})
 
-    date_format = "%d-%m-%Y"
+    date_format = '%d-%m-%Y'
     next_order_date = datetime.strptime(next_order_date, date_format)
 
     if datetime.now() + timedelta(days=1) > next_order_date:
-        return Response({'status': SUBSCRIPTION_DATE_ERROR},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': SUBSCRIPTION_DATE_ERROR}, status=status.HTTP_400_BAD_REQUEST)
 
     if subscription.status != 'A':
-        return Response({'status': SUBSCRIPTION_NOT_ACTIVE},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': SUBSCRIPTION_NOT_ACTIVE}, status=status.HTTP_400_BAD_REQUEST)
 
     setattr(subscription, 'last_order_date', next_order_date + timedelta(days=
             (subscription.last_order_date.date() - subscription.next_order_date.date()).days))
-    setattr(subscription, 'paid_till', subscription.paid_till + timedelta(days=
-            (subscription.last_order_date.date() - subscription.next_order_date.date()).days))
+
+    if subscription.paid_till is not None:
+        setattr(subscription, 'paid_till', subscription.paid_till + timedelta(days=
+                (subscription.last_order_date.date() - subscription.next_order_date.date()).days))
+
     setattr(subscription, 'next_order_date', next_order_date)
 
     subscription.save()
@@ -215,5 +261,6 @@ def cancel_subscription(subscription_id):
     if subscription.status == 'A':
         setattr(subscription, 'status', 'C')
         subscription.save()
+        # Refund payment if paid_till was greater.
         return Response({'status': SUBSCRIPTION_CANCELLED}, status=status.HTTP_200_OK)
     return Response({'status': SUBSCRIPTION_NOT_ACTIVE}, status=status.HTTP_400_BAD_REQUEST)

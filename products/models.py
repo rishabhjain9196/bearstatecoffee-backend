@@ -13,6 +13,9 @@ class Categories(models.Model):
     terms = models.CharField(max_length=5000)
     is_delete = models.BooleanField(default=False)
 
+    def __str__(self):
+        return str(self.period_number) + " " + str(self.period_name)
+
 
 class Products(models.Model):
     """
@@ -30,6 +33,9 @@ class Products(models.Model):
     combo_product_ids = models.ManyToManyField("self", through='Combo', symmetrical=False)
     category_ids = models.ManyToManyField("Categories")
     is_delete = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
 
 
 class Combo(models.Model):
@@ -53,6 +59,9 @@ class CartProducts(models.Model):
     quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.product.name
+
 
 class Subscriptions(models.Model):
     """
@@ -73,7 +82,7 @@ class Subscriptions(models.Model):
     status = models.CharField(max_length=1, choices=status_choices, default='I')
     next_order_date = models.DateTimeField(blank=True, null=True)
     last_order_date = models.DateTimeField(blank=True, null=True)
-    paid_till = models.DateTimeField(blank=True, null=True)
+    paid_till = models.DateTimeField(blank=True, null=True, default=None)
 
 
 class Orders(models.Model):
@@ -83,8 +92,8 @@ class Orders(models.Model):
     """
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
     is_subscription = models.BooleanField(default=False)
-    customer_order_id = models.BigIntegerField()
-    subscription = models.ForeignKey(Subscriptions, on_delete=models.CASCADE)
+    customer_order_id = models.BigIntegerField(null=True, blank=True)
+    subscription = models.ForeignKey(Subscriptions, on_delete=models.CASCADE, default=None, blank=True)
     payment_type_choices = (
         ('C', 'CASH ON DELIVERY'),
         ('N', 'NET BANKING'),
@@ -93,4 +102,4 @@ class Orders(models.Model):
     )
     payment_type = models.CharField(max_length=1, choices=payment_type_choices, default='C')
     payment_status = models.BooleanField(default=False)
-    shipping_status = ArrayField(models.CharField(max_length=50))
+    shipping_status = ArrayField(models.CharField(max_length=50), blank=True, null=True)
