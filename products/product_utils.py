@@ -265,6 +265,19 @@ def initiate_payment(data):
                         status=status.HTTP_400_BAD_REQUEST)
 
 
+def reset_product_quantities(order):
+    """
+        This will reset the quantities of product, upon order cancellation or bad paymment.
+    :param order: the order instance.
+    :return: None
+    """
+    cart_products = order.cartproducts_set.all()
+
+    for product in cart_products:
+        product.product.avail_quantity += product.quantity
+        product.product.save()
+
+
 def confirm_payment(data):
     """
         Helper function to be called as the response against the callback of the payment gateway.
@@ -283,11 +296,7 @@ def confirm_payment(data):
             send_mail_on_order_confirmation(customer_order_id)
         else:
             order = Orders.objects.filter(customer_order_id=customer_order_id).first()
-            cart_products = order.cartproducts_set.all()
-
-            for product in cart_products:
-                product.product.avail_quantity += product.quantity
-                product.product.save()
+            reset_product_quantities(order)
 
             order.payment_status = payment_status
             order.save()
@@ -308,3 +317,25 @@ def get_order_of_user(user):
         'data': OrdersSerializers(instance=Orders.objects.filter(user=user), many=True).data
     }
     return Response(payload, status=status.HTTP_200_OK)
+
+
+def cancel_order(user, order_id):
+    """
+        Any user can cancel his own order and admin can cancel any order.
+    :param user: user fetched from request.
+    :param order_id: Order that needs to be cancelled.
+    :return: True or False, with appropriate response message.
+    """
+    try:
+        order = Orders.objects.get(pk=order_id)
+    except ObjectDoesNotExist:
+        return Response({'result': False, 'message': const.INVALID_ORDER})
+
+    if order.user == user or user.is_staff:
+        reset_product_quantities(order)
+        order.is_cancelled = True
+        order.cancelled_by = user
+        order.save()
+        return Response({'result': True})
+    else:
+        return Response({'result': False, 'message': const.NOT_ALLOWED}, status=status.HTTP_403_FORBIDDEN)

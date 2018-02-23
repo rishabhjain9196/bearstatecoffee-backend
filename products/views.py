@@ -174,3 +174,13 @@ class GetOrderView(APIView):
 
     def get(self, request):
         return product_utils.get_order_of_user(request.user)
+
+
+class CancelOrderView(APIView):
+    """
+        This will cancel the order.
+    """
+    permissions_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        return product_utils.cancel_order(request.user, request.data.get('id', ''))

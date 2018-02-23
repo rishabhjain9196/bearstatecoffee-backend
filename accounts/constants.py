@@ -42,5 +42,5 @@ PASSWORD_RESET_SUCCESS = 'Password reset successful.'
 
 # Validation
 RESET_PASSWORD_DATA_VALIDATION = 'Email not found.'
-RESET_PASSWORD_VALIDATION = 'Password doesn\'t match'
-LOGIN_VALIDATION = 'Missing Email or Password'
+RESET_PASSWORD_VALIDATION = 'Password doesn\'t match.'
+LOGIN_VALIDATION = 'Missing Email or Password.'

@@ -49,6 +49,8 @@ class Orders(models.Model):
     is_subscription = models.BooleanField(default=False)
     customer_order_id = models.CharField(max_length=20, unique=True)
     is_confirmed = models.BooleanField(default=False)
+    is_cancelled = models.BooleanField(default=False)
+    cancelled_by = models.ForeignKey(MyUser, related_name='cancelled', on_delete=models.CASCADE, blank=True, null=True)
     amount_payable = models.FloatField(default=0.00)
     amount_paid = models.FloatField(default=0.00)
     payment_type_choices = (
