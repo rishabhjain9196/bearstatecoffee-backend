@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import permissions
+from rest_framework import permissions, status
+
 from accounts.serializers import MyUserUpdateSerializer, MyUserSerializer
 from accounts.utils import verify_email, register_user, login_user, revoke_auth_token, reset_password_form,\
-    reset_password, send_reset_password_email
+    reset_password, send_reset_password_email, refresh_access_token
+import accounts.constants as const
 
 # Create your views here.
 
@@ -20,7 +22,7 @@ class SignUpView(APIView):
         :param request: requires email, password, first_name, last_name, phone_number, user_type.
         :return: result = True with 200 response code.
         """
-        user_type = request.data['user_type']
+        user_type = request.data.get('user_type', '')
         return register_user(user_type, request.data)
 
 
@@ -33,6 +35,7 @@ class VerifyEmailView(APIView):
     def get(self, request, token):
         """
             Check if the email got verified within 2 days.
+        :param token: Fetched from url, and it will be unique token.
         """
         return verify_email(token)
 
@@ -44,7 +47,10 @@ class ResetPasswordSendMailView(APIView):
     permission_classes = ()
 
     def post(self, request):
-        email = request.data['email']
+        email = request.data.get('email', '')
+        if not email:
+            return Response({'result': False, 'message': const.RESET_PASSWORD_DATA_VALIDATION},
+                            status=status.HTTP_400_BAD_REQUEST)
         return send_reset_password_email(email)
 
 
@@ -64,13 +70,13 @@ class ResetPasswordMailView(APIView):
         """
             Let the user change the password for the first time within 2 days
         """
-        _password = request.data['password']
-        _confirmed_password = request.data['confirm_password']
+        _password = request.data.get('password')
+        _confirmed_password = request.data.get('confirm_password')
 
-        if _password == _confirmed_password:
+        if _password and _confirmed_password and _password == _confirmed_password:
             return reset_password(token, _password)
 
-        return Response({'result': False, 'message': "Password doesn't match"})
+        return Response({'result': False, 'message': const.RESET_PASSWORD_VALIDATION})
 
 
 class ChangePasswordView(APIView):
@@ -80,17 +86,18 @@ class ChangePasswordView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
-        previous_password = request.data['previous_password']
-        password = request.data['password']
-        confirm_password = request.data['confirm_password']
+        previous_password = request.data.get('previous_password')
+        password = request.data.get('password')
+        confirm_password = request.data.get('confirm_password')
         user = request.user
 
-        if password == confirm_password and user.check_password(previous_password):
+        if previous_password and password and confirm_password and password == confirm_password and \
+                user.check_password(previous_password):
             user.set_password(password)
             user.save()
-            return Response({'result': True, 'data': 'Password Changed Successfully'})
+            return Response({'result': True, 'data': const.PASSWORD_RESET_SUCCESS})
 
-        return Response({'result': False, 'message': 'Password does not matches.'})
+        return Response({'result': False, 'message': const.RESET_PASSWORD_VALIDATION})
 
 
 class LoginView(APIView):
@@ -100,10 +107,13 @@ class LoginView(APIView):
     permission_classes = ()
 
     def post(self, request):
-        email = request.data['email']
-        password = request.data['password']
+        email = request.data.get('email')
+        password = request.data.get('password')
 
-        return login_user(email, password)
+        if email and password:
+            return login_user(email, password)
+
+        return Response({'result': False, 'message': const.LOGIN_VALIDATION})
 
 
 class LogoutView(APIView):
@@ -115,6 +125,19 @@ class LogoutView(APIView):
     def post(self, request):
         token = request.auth
         return revoke_auth_token(token)
+
+
+class RefreshAccessTokenView(APIView):
+    """
+        This will refresh the access token.
+    """
+    permission_classes = ()
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh_token', '')
+        if refresh_token:
+            return refresh_access_token(refresh_token)
+        return Response({'result': False, 'message': const.REQUIRED_ACCESS_TOKEN}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserDetailsView(APIView):
@@ -139,6 +162,6 @@ class UserDetailsView(APIView):
             for key, value in serialized_data.validated_data.items():
                 setattr(user, key, value)
             user.save()
-            return Response({'result': True, 'data': 'Updated Successfully.'})
+            return Response({'result': True, 'data': const.SUCCESS_MESSAGE})
         else:
-            return Response({'result': False, 'message': 'Invalid data.'})
+            return Response({'result': False, 'data': serialized_data.errors})

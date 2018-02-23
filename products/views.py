@@ -1,6 +1,8 @@
+from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from products import product_utils, categories_util
+import products.constants as const
 
 
 class ProductsView(APIView):
@@ -111,4 +113,84 @@ class ComboView(APIView):
         return Response(product_utils.create_combo(request.data))
 
 
+class CartView(APIView):
+    """
+        This will help in displaying, adding product, removing product from cart
+    """
+    permission_classes = (permissions.IsAuthenticated,)
 
+    def get(self, request):
+        return product_utils.get_the_user_cart(request.user)
+
+    def post(self, request):
+        return product_utils.add_product_to_cart(request.user, request.data)
+
+    def delete(self, request):
+        cart_product_id = request.data.get('cart_product_id', '')
+        quantity = request.data.get('quantity', '')
+
+        if not (cart_product_id and quantity):
+            return Response({'result': False, 'message': const.CART_VALIDATION},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return product_utils.remove_from_cart(request.user, cart_product_id, quantity)
+
+
+class InitiateOrderCartView(APIView):
+    """
+        This will place initiate the order using the active cart products.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        return product_utils.initiate_order_from_cart(request.user)
+
+
+class InitiatePaymentView(APIView):
+    """
+        This will help in initiating the payment.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        return product_utils.initiate_payment(request.data)
+
+
+class CallbackByPaymentGatewayView(APIView):
+    """
+        This will be the callback received by the payment gateway to confirm the payment.
+    """
+    permission_classes = ()
+
+    def post(self, request):
+        return product_utils.confirm_payment(request.data)
+
+
+class GetOrderView(APIView):
+    """
+        This will fetch the orders placed by user.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        return product_utils.get_order_of_user(request.user)
+
+
+class CancelOrderView(APIView):
+    """
+        This will cancel the order.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        return product_utils.cancel_order(request.user, request.data.get('id', ''))
+
+
+class ViewAllOrders(APIView):
+    """
+        This will help in viewing all the orders.
+    """
+    permission_classes = (permissions.IsAdminUser,)
+
+    def post(self, request):
+        return product_utils.view_all_orders()

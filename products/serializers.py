@@ -6,8 +6,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Products
-        fields = ('pk', 'name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
-                  'is_delete')
+        fields = '__all__'
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -20,3 +19,25 @@ class ComboSerializer(serializers.ModelSerializer):
     class Meta:
         model = Combo
         fields = ('quantity',)
+
+
+class CartProductSerializer(serializers.ModelSerializer):
+    """
+        This is for returning serialized cart products items.
+    """
+    product = ProductSerializer()
+    cost = serializers.FloatField(required=False)
+
+    class Meta:
+        model = CartProducts
+        exclude = ('user',)
+
+
+class OrdersSerializers(serializers.ModelSerializer):
+    """
+        This is for getting the order detials.
+    """
+
+    class Meta:
+        model = Orders
+        fields = '__all__'
