@@ -2,8 +2,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework import status
 
-from products.serializers import CategoriesSerializer
+from products.constants import *
 from products.models import Categories, Products
+from products.serializers import CategoriesSerializer
 
 
 def fetch_all_categories():
@@ -33,12 +34,13 @@ def update_category(data, key):
     """
         Utility function to update an existing category
         :param data: Data of the category that has to be updated.
+        :param key: Primary key of category that is to be updated.
         :return: Response whether the data was updated(status = 200) or not(status= 404)
     """
     try:
         category = Categories.objects.get(pk=key)
     except ObjectDoesNotExist:
-        return Response({'status': 'The category to be updated was not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': CATEGORY_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
     valid_fields = ['period_number', 'period_name', 'terms']
     correct_details = True
@@ -50,8 +52,8 @@ def update_category(data, key):
             break
     if correct_details:
         category.save()
-        return Response({'status': 'The category was updated.'}, status=status.HTTP_200_OK)
-    return Response({'status': 'Details entered have invalid fields.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': CATEGORY_UPDATED}, status=status.HTTP_200_OK)
+    return Response({'status': INVALID_FIELDS}, status=status.HTTP_404_NOT_FOUND)
 
 
 def delete_category(key):
@@ -63,11 +65,11 @@ def delete_category(key):
     try:
         category = Categories.objects.get(pk=key)
     except ObjectDoesNotExist:
-        return Response({'status': 'The category to be updated was not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': CATEGORY_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
     setattr(category, 'is_delete', True)
     category.save()
-    return Response({'status': 'The category was deleted successfully'}, status=status.HTTP_200_OK)
+    return Response({'status': CATEGORY_DELETED}, status=status.HTTP_200_OK)
 
 
 def get_all_categories_of_product(key):
@@ -79,7 +81,7 @@ def get_all_categories_of_product(key):
     try:
         product = Products.objects.get(pk=key)
     except ObjectDoesNotExist:
-        return Response({'status': 'The product does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': PRODUCT_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
     ser = CategoriesSerializer(product.category_ids.all(), many=True)
     return Response(ser.data, status=status.HTTP_200_OK)
@@ -96,11 +98,11 @@ def add_category_to_product(product_pk, category_pk):
         product = Products.objects.get(pk=product_pk)
         category = Categories.objects.get(pk=category_pk)
     except ObjectDoesNotExist:
-        return Response({'status': 'The product or the category being added does not exist.'},
+        return Response({'status': PRODUCT_NOT_FOUND + 'or' + CATEGORY_NOT_FOUND},
                         status=status.HTTP_404_NOT_FOUND)
 
     product.category_ids.add(category)
-    return Response({'status': 'The category was successfully added.'}, status=status.HTTP_201_CREATED)
+    return Response({'status': CATEGORY_ADDED_TO_PRODUCT}, status=status.HTTP_201_CREATED)
 
 
 def remove_category_from_product(product_pk, category_pk):
@@ -114,8 +116,8 @@ def remove_category_from_product(product_pk, category_pk):
         product = Products.objects.get(pk=product_pk)
         category = Categories.objects.get(pk=category_pk)
     except ObjectDoesNotExist:
-        return Response({'status': 'The product or the category being added does not exist.'},
+        return Response({'status': PRODUCT_NOT_FOUND + 'or' + CATEGORY_NOT_FOUND},
                         status=status.HTTP_404_NOT_FOUND)
 
     product.category_ids.remove(category)
-    return Response({'status': 'The category was successfully deleted'}, status=status.HTTP_200_OK)
+    return Response({'status': CATEGORY_REMOVED_FROM_PRODUCT}, status=status.HTTP_200_OK)

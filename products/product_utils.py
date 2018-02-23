@@ -2,6 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework import status
 
+from products.constants import *
 from products.models import Products, Combo
 from products.serializers import ProductSerializer, ComboSerializer
 
@@ -27,7 +28,7 @@ def fetch_all_products():
     """
     query_set = Products.objects.filter(is_delete=False, is_combo=False)
     serializer = ProductSerializer(query_set, many=True)
-    return serializer.data
+    return Response(serializer.data)
 
 
 def update_product(data, key):
@@ -40,7 +41,7 @@ def update_product(data, key):
     try:
         product = Products.objects.get(pk=key, is_delete=False)
     except ObjectDoesNotExist:
-        return Response({'status': 'The product being updated does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': PRODUCT_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
     valid_fields = ['name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
                     'is_delete']
@@ -48,7 +49,7 @@ def update_product(data, key):
         if field in valid_fields:
             setattr(product, field, data[field])
     product.save()
-    return Response({'status': 'The product was successfully updated.'}, status=status.HTTP_200_OK)
+    return Response({'status': PRODUCT_UPDATED}, status=status.HTTP_200_OK)
 
 
 def delete_product(key):
@@ -60,11 +61,11 @@ def delete_product(key):
     try:
         product = Products.objects.get(pk=key, is_delete=False)
     except ObjectDoesNotExist:
-        return Response({'status': 'The product being deleted does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': PRODUCT_NOT_FOUND}, status=status.HTTP_400_BAD_REQUEST)
 
     setattr(product, 'is_delete', True)
     product.save()
-    return Response({'status': 'The product was successfully deleted.'}, status=status.HTTP_200_OK)
+    return Response({'status': PRODUCT_DELETED}, status=status.HTTP_200_OK)
 
 
 def create_combo(combo):
@@ -78,7 +79,7 @@ def create_combo(combo):
     for products in combo.get('quantity'):
         total_quantity = total_quantity + combo.get('quantity').get(products)
     if total_quantity < 2:
-        return Response({'status': 'The total quantities of products in a combo must at least be two.'},
+        return Response({'status': COMBO_QUANTITY_ERROR},
                         status=status.HTTP_400_BAD_REQUEST)
     combo_name = combo.get('name')
     combo_image = combo.get('image', '')
@@ -86,7 +87,7 @@ def create_combo(combo):
     combo_avail_quantity = combo.get('avail_quantity', 1)
     combo_desc = combo.get('desc', '')
     if not combo_name or not combo_cost:
-        return Response({'status': 'Name and Cost are necessary to add a combo.'},
+        return Response({'status': COMBO_FIELD_ERROR},
                         status=status.HTTP_400_BAD_REQUEST)
 
     new_combo = Products.objects.create(name=combo_name, image=combo_image,
@@ -99,12 +100,12 @@ def create_combo(combo):
         try:
             product = Products.objects.get(pk=int(product_id), is_delete=False)
         except ObjectDoesNotExist:
-            return Response({'status': 'One or more Product in the Combo does not exist.'},
+            return Response({'status': COMBO_PRODUCT_ERROR},
                             status=status.HTTP_404_NOT_FOUND)
 
         combo_relation = Combo(combo=new_combo, product=product, quantity=combo['quantity'][product_id])
         combo_relation.save()
-    return Response({'status': 'The combo was created successfully.'}, status=status.HTTP_200_OK)
+    return Response({'status': COMBO_ADDED}, status=status.HTTP_200_OK)
 
 
 def view_all_combos():

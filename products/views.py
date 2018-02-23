@@ -16,7 +16,7 @@ class ProductsView(APIView):
         """
         :return: Response containing JSON data, with all the details of single products.
         """
-        return Response(product_utils.fetch_all_products())
+        return product_utils.fetch_all_products()
 
 
 class EditProductsView(APIView):

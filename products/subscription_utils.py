@@ -4,8 +4,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework import status
 
-from products.serializers import SubscriptionSerializer
+from products.constants import *
 from products.models import Subscriptions, Products, Categories, Orders
+from products.serializers import SubscriptionSerializer
 
 
 def add_subscription(user, data):
@@ -15,7 +16,7 @@ def add_subscription(user, data):
     :return: Response whether the subscription was successfully added(status=200) or not(status=404).
     """
     if not user:
-        return Response({'status': 'The user does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': USER_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
     valid_fields = ['product_id', 'category_id', 'quantity']
     product_exists = False
@@ -26,23 +27,23 @@ def add_subscription(user, data):
         elif element == valid_fields[1]:
             category_exist = True
         else:
-            return Response({'status': 'Invalid fields are passed to add subscription'},
+            return Response({'status': INVALID_FIELDS},
                             status=status.HTTP_400_BAD_REQUEST)
 
     if not product_exists or not category_exist:
-        return Response({'status': 'Product and Category are required fields to add a subscription'},
+        return Response({'status': SUBSCRIPTION_FIELD_ERROR},
                         status=status.HTTP_400_BAD_REQUEST)
 
     # Check whether category option is available in product
     try:
         product = Products.objects.get(pk=data[valid_fields[0]], category_ids=data[valid_fields[1]])
     except ObjectDoesNotExist:
-        return Response({'status': 'The selected category is not available for this product.'},
+        return Response({'status': CATEGORY_NOT_FOR_PRODUCT},
                         status=status.HTTP_400_BAD_REQUEST)
 
     new_subscription = Subscriptions.objects.create(user=user, **data)
     new_subscription.save()
-    return Response({'status': 'The subscription was successfully added.'}, status=status.HTTP_200_OK)
+    return Response({'status': SUBSCRIPTION_ADDED}, status=status.HTTP_200_OK)
 
 
 def view_subscription(pk):
@@ -65,10 +66,10 @@ def finalize_subscription(subscription_id, data):
     try:
         sub = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
-        return Response({'status': 'This subscription does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': SUBSCRIPTION_NOT_FOUND}, status=status.HTTP_400_BAD_REQUEST)
 
     if sub.status == 'A':
-        return Response({'status': 'This subscription is already active.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': SUBSCRIPTION_ACTIVE}, status=status.HTTP_400_BAD_REQUEST)
 
     date_format = "%d-%m-%Y"
     valid_fields = ['next_order_date', 'last_order_date', 'paid_till']
@@ -80,7 +81,7 @@ def finalize_subscription(subscription_id, data):
     setattr(sub, 'start_date', datetime.now())
     sub.save()
 
-    return Response({'status': 'This subscription has been successfully finalized.'}, status=status.HTTP_200_OK)
+    return Response({'status': SUBSCRIPTION_FINALIZED}, status=status.HTTP_200_OK)
 
 
 def get_days_from_category_id(key):
@@ -116,6 +117,13 @@ def insert_into_order_from_subscription(subscription_id, payment_status, payment
         subscription = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
         return {'status': False}
+
+    product_cost = Subscriptions.objects.get(pk=subscription_id).product.cost
+    if payment_status:
+        cost_paid = product_cost
+    else:
+        cost_paid = 0
+
     new_order = Orders.objects.create(user_id=subscription.user_id, is_subscription=True,
                                       subscription_id=subscription_id, payment_type=payment_type,
                                       payment_status=payment_status)
@@ -171,17 +179,17 @@ def shift_subscription(subscription_id, next_order_date):
     try:
         subscription = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
-        return Response({'status': 'This subscription does not exist. '})
+        return Response({'status': SUBSCRIPTION_NOT_FOUND})
 
     date_format = "%d-%m-%Y"
     next_order_date = datetime.strptime(next_order_date, date_format)
 
     if datetime.now() + timedelta(days=1) > next_order_date:
-        return Response({'status': 'The new order date has to be at least 1 day ahead of today.'},
+        return Response({'status': SUBSCRIPTION_DATE_ERROR},
                         status=status.HTTP_400_BAD_REQUEST)
 
     if subscription.status != 'A':
-        return Response({'status': 'This subscription is not currently active.'},
+        return Response({'status': SUBSCRIPTION_NOT_ACTIVE},
                         status=status.HTTP_400_BAD_REQUEST)
 
     setattr(subscription, 'last_order_date', next_order_date + timedelta(days=
@@ -191,7 +199,7 @@ def shift_subscription(subscription_id, next_order_date):
     setattr(subscription, 'next_order_date', next_order_date)
 
     subscription.save()
-    return Response({'status': 'The subscription was successfully shifted.'}, status=status.HTTP_200_OK)
+    return Response({'status': SUBSCRIPTION_SHIFTED}, status=status.HTTP_200_OK)
 
 
 def cancel_subscription(subscription_id):
@@ -202,10 +210,10 @@ def cancel_subscription(subscription_id):
     try:
         subscription = Subscriptions.objects.get(pk=subscription_id)
     except ObjectDoesNotExist:
-        return Response({'status': 'This subscription does not exist.'})
+        return Response({'status': SUBSCRIPTION_NOT_FOUND})
 
     if subscription.status == 'A':
         setattr(subscription, 'status', 'C')
         subscription.save()
-        return Response({'status': 'The subscription has been cancelled.'}, status=status.HTTP_200_OK)
-    return Response({'status': 'The subscription cannot be cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': SUBSCRIPTION_CANCELLED}, status=status.HTTP_200_OK)
+    return Response({'status': SUBSCRIPTION_NOT_ACTIVE}, status=status.HTTP_400_BAD_REQUEST)
