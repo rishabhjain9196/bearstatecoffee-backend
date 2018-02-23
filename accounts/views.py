@@ -4,7 +4,7 @@ from rest_framework import permissions, status
 
 from accounts.serializers import MyUserUpdateSerializer, MyUserSerializer
 from accounts.utils import verify_email, register_user, login_user, revoke_auth_token, reset_password_form,\
-    reset_password, send_reset_password_email
+    reset_password, send_reset_password_email, refresh_access_token
 import accounts.constants as const
 
 # Create your views here.
@@ -125,6 +125,19 @@ class LogoutView(APIView):
     def post(self, request):
         token = request.auth
         return revoke_auth_token(token)
+
+
+class RefreshAccessTokenView(APIView):
+    """
+        This will refresh the access token.
+    """
+    permission_classes = ()
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh_token', '')
+        if refresh_token:
+            return refresh_access_token(refresh_token)
+        return Response({'result': False, 'message': const.REQUIRED_ACCESS_TOKEN}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserDetailsView(APIView):

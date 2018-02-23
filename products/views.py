@@ -180,7 +180,17 @@ class CancelOrderView(APIView):
     """
         This will cancel the order.
     """
-    permissions_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
         return product_utils.cancel_order(request.user, request.data.get('id', ''))
+
+
+class ViewAllOrders(APIView):
+    """
+        This will help in viewing all the orders.
+    """
+    permission_classes = (permissions.IsAdminUser,)
+
+    def post(self, request):
+        return product_utils.view_all_orders()

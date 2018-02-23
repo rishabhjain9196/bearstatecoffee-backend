@@ -223,8 +223,8 @@ def initiate_order_from_cart(user):
 def send_mail_on_order_confirmation(customer_order_id):
     """
         Helper Function to send the email to user for their confirmed user.
-    :param customer_order_id:
-    :return:
+    :param customer_order_id: this will be the customer_order_id generated while ordering.
+    :return: NONE
     """
     order = Orders.objects.filter(customer_order_id=customer_order_id).first()
     if order.is_subscription:
@@ -339,3 +339,16 @@ def cancel_order(user, order_id):
         return Response({'result': True})
     else:
         return Response({'result': False, 'message': const.NOT_ALLOWED}, status=status.HTTP_403_FORBIDDEN)
+
+
+def view_all_orders():
+    """
+        This will return the list of all the orders.
+    :return:
+    """
+    payload = {
+        'result': True,
+        'data': OrdersSerializers(instance=Orders.objects.al(), many=True).data
+    }
+
+    return Response(payload, status=status.HTTP_200_OK)

@@ -100,20 +100,28 @@ def register_user(user_type, data):
     return Response({'result': True, 'data': const.USER_REGISTERED})
 
 
-def get_auth_token(email, password):
+def get_auth_token(email='', password='', refresh_token='', grant_type='password'):
     """
         This methods sends the post request to fetch the access and refresh token.
-    :param email: Email address of the user.
-    :param password: Password of the user.
+    :param email: Email address of the user. Required only for 'password' grant_type.
+    :param password: Password of the user. Required only for 'password' grant_type.
+    :param refresh_token: if grant_type is refresh_token then it needs to be there.
+    :param grant_type: password or refresh_token
     :return: Result of the post request.
     """
     url = settings.BASE_URL + const.OAUTH_LOGIN_URL
     auth = (settings.CLIENT_ID, settings.CLIENT_SECRET)
-    payload = {
-        'grant_type': 'password',
-        'username': email,
-        'password': password
-    }
+    if grant_type == 'password':
+        payload = {
+            'grant_type': grant_type,
+            'username': email,
+            'password': password
+        }
+    else:
+        payload = {
+            'grant_type': grant_type,
+            'refresh_token': refresh_token
+        }
     return requests.post(url, data=payload, auth=auth)
 
 
@@ -147,7 +155,7 @@ def login_user(email, password):
 
     if user:
         if user.is_verified:
-            response = get_auth_token(email, password)
+            response = get_auth_token(email=email, password=password)
             if 'error' in response.json():
                 return Response({'result': False, 'message': const.USER_INVALID})
             payload = {
@@ -164,6 +172,23 @@ def login_user(email, password):
             return Response({'result': True, 'data': const.VERIFY_EMAIL})
     else:
         return Response({'result': False, 'message': const.USER_INVALID})
+
+
+def refresh_access_token(refresh_token):
+    """
+        This will refresh the access token using the refresh token.
+    :param refresh_token: To be fetched from the request.data
+    :return: True or False with appropriate token or message.
+    """
+    response = get_auth_token(refresh_token=refresh_token, grant_type='refresh_token')
+
+    if 'error' in response.json():
+        return Response({'result': False, 'message': const.INVALID_TOKEN})
+    payload = {
+        'result': True,
+        'data': response.json()
+    }
+    return Response(payload)
 
 
 def check_within_time(original_date, time_period_allowed):

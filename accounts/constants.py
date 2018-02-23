@@ -39,6 +39,9 @@ LINK_EXPIRED = 'Link expired.'
 LINK_INVALID = 'Link doesn\'t exists.'
 PASSWORD_RESET_SUCCESS = 'Password reset successful.'
 
+REQUIRED_ACCESS_TOKEN = 'Access token required.'
+INVALID_TOKEN = 'Token is invalid.'
+
 
 # Validation
 RESET_PASSWORD_DATA_VALIDATION = 'Email not found.'
