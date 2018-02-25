@@ -98,6 +98,7 @@ def get_days_from_category_id(key):
         return {'status': False}
 
     number_of_days = category.period_number
+    multiplier = 1
     if category.period_name == 'week':
         multiplier = 7
     elif category.period_name == 'month':
