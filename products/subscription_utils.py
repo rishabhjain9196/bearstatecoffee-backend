@@ -20,24 +20,16 @@ def add_subscription(user, data):
         return Response({'status': USER_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
     valid_fields = ['product_id', 'category_id', 'quantity']
-    product_exists = False
-    category_exist = False
-    for element in data:
-        if element == valid_fields[0]:
-            product_exists = True
-        elif element == valid_fields[1]:
-            category_exist = True
-        else:
-            return Response({'status': INVALID_FIELDS},
-                            status=status.HTTP_400_BAD_REQUEST)
+    product_id = data.get('product_id')
+    category_id = data.get('category_id')
 
-    if not product_exists or not category_exist:
-        return Response({'status': SUBSCRIPTION_FIELD_ERROR},
-                        status=status.HTTP_400_BAD_REQUEST)
+    # validating exact fields as in list valid_fields
+    if not (all(keys in valid_fields for keys in data) and all(keys in data for keys in valid_fields)):
+        return Response({'status': INVALID_FIELDS}, status=status.HTTP_400_BAD_REQUEST)
 
     # Check whether category option is available in product
     try:
-        product = Products.objects.get(pk=data[valid_fields[0]], category_ids=data[valid_fields[1]])
+        product = Products.objects.get(pk=product_id, category_ids=category_id)
     except ObjectDoesNotExist:
         return Response({'status': CATEGORY_NOT_FOR_PRODUCT},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -76,10 +68,17 @@ def finalize_subscription(subscription_id, data):
         return Response({'status': PRODUCT_NOT_FOUND}, status=status.HTTP_400_BAD_REQUEST)
 
     date_format = "%d-%m-%Y"
-    valid_fields = ['next_order_date', 'last_order_date', 'paid_till']
+    valid_fields = ['next_order_date', 'last_order_date']
+
     for element in data:
         if element in valid_fields:
             setattr(sub, element, datetime.strptime(data[element], date_format))
+        else:
+            return Response({'status': INVALID_FIELDS}, status=status.HTTP_400_BAD_REQUEST)
+
+    paid_till = data.get('paid_till', None)
+    if paid_till is not None:
+        setattr(sub, 'paid_till', datetime.strptime(data['paid_till'], date_format))
 
     setattr(sub, 'status', 'A')
     setattr(sub, 'start_date', datetime.now())
@@ -99,7 +98,6 @@ def get_days_from_category_id(key):
         return {'status': False}
 
     number_of_days = category.period_number
-    multiplier = 1
     if category.period_name == 'week':
         multiplier = 7
     elif category.period_name == 'month':
@@ -135,16 +133,24 @@ def insert_into_order_from_subscription(subscription_id, payment_status, payment
 
     product.avail_quantity = product.avail_quantity - subscription.quantity
     product.save()
+    amount_payable = product.cost * subscription.quantity
 
     if payment_status:
-        cost_paid = product.cost
+        amount_paid = amount_payable
     else:
-        cost_paid = 0
+        amount_paid = 0.00
 
     new_order = Orders.objects.create(user_id=subscription.user_id, is_subscription=True,
                                       subscription_id=subscription_id, payment_type=payment_type,
-                                      payment_status=payment_status)
+                                      payment_status=payment_status, is_confirmed=True, amount_payable=amount_payable,
+                                      amount_paid=amount_paid)
     new_order.save()
+    body = ORDER_CONFIRMATION_EMAIL_BODY % (str(amount_payable), str(new_order.customer))
+    body += ORDER_CONFIRMATION_EMAIL_BODY_PRODUCTS % (str(product.name), str(subscription.quantity),
+                                                      str(subscription.quantity * product.cost))
+    subject = ORDER_CONFIRMATION_EMAIL_SUBJECT
+    send_text_email(body=body, subject=subject, to_address=subscription.user.email)
+
     return {'status': 'True'}
 
 
@@ -179,7 +185,7 @@ def new_orders_from_subscription():
                 result = insert_into_order_from_subscription(obj.id, payment_status, payment_type)
 
                 if result['status'] == 'True':
-                    # TODO Inform user of the order placed.
+
                     previous_order = obj.next_order_date
                     next_order_date = previous_order + timedelta(days=periodicity['data'])
                     if next_order_date > obj.last_order_date:
@@ -191,35 +197,32 @@ def new_orders_from_subscription():
                 elif result['status'] == 'False':
                     # Here the quantity of the product is not available, so the subscription is automatically shifted,
                     # to the next date.
-                    # TODO Inform user of the shifting of subscription due non-availability of product.
                     shifted_subscriptions.append(obj.id)
                     next_date = obj.next_order_date + timedelta(days=periodicity['data'])
                     next_date = next_date.strftime('%d-%m-%Y')
-                    shift_subscription(obj.id, next_date)
+                    shift_subscription(obj.id, next_date, reason=SHIFTING_REASON_NO_QUANTITY)
 
                 elif result['status'] == PRODUCT_NOT_FOUND:
                     # The product itself has been discontinued.
-                    # TODO Inform user for the cancellation of the subscription due to removal of product.
                     cancelled_subscriptions.append(obj.id)
-                    cancel_subscription(obj.id)
+                    cancel_subscription(obj.id, reason=CANCEL_REASON_NO_PRODUCT)
 
             else:
                 # If and when the selected periodicity for a product is removed from the admin,
                 # or is no longer provided by the merchant or so, then all the subscriptions
                 # with that product and that periodicity will be cancelled.
-                # TODO Inform user for the cancellation of the subscription due to removal of category option of that
-                # TODO product.
                 cancelled_subscriptions.append(obj.id)
-                cancel_subscription(obj.id)
+                cancel_subscription(obj.id, reason=CANCEL_REASON_NO_PERIOD)
 
     serialized = SubscriptionSerializer(next_week_subscriptions, many=True)
     return Response({'cancelled': cancelled_subscriptions, 'shifted': shifted_subscriptions, 'data': serialized.data})
 
 
-def shift_subscription(subscription_id, next_order_date):
+def shift_subscription(subscription_id, next_order_date, reason=None):
     """
     :param subscription_id: Primary Key of subscription which is to be shifted
     :param next_order_date: The date to which the subscription is to be shifted
+    :param reason: To provide a reason why the order was shifted.
     :return: Response whether the subscription was successfully shifted(status=200) or not(status=400)
     """
     try:
@@ -228,6 +231,7 @@ def shift_subscription(subscription_id, next_order_date):
         return Response({'status': SUBSCRIPTION_NOT_FOUND})
 
     date_format = '%d-%m-%Y'
+    string_date = next_order_date
     next_order_date = datetime.strptime(next_order_date, date_format)
 
     if datetime.now() + timedelta(days=1) > next_order_date:
@@ -246,12 +250,19 @@ def shift_subscription(subscription_id, next_order_date):
     setattr(subscription, 'next_order_date', next_order_date)
 
     subscription.save()
+    body = SUBSCRIPTION_SHIFT_BODY % (str(subscription.product.name), string_date)
+    if reason is not None:
+        body += reason
+    subject = SUBSCRIPTION_SHIFT_SUBJECT
+    send_text_email(body=body, subject=subject, to_address=subscription.user.email)
+
     return Response({'status': SUBSCRIPTION_SHIFTED}, status=status.HTTP_200_OK)
 
 
-def cancel_subscription(subscription_id):
+def cancel_subscription(subscription_id, reason=None):
     """
     :param subscription_id: Subscription's Primary Key which needs to be cancelled
+    :param reason: To provide a reason why the order was cancelled.
     :return: Response whether the subscription was successfully cancelled or not
     """
     try:
@@ -262,6 +273,14 @@ def cancel_subscription(subscription_id):
     if subscription.status == 'A':
         setattr(subscription, 'status', 'C')
         subscription.save()
-        # Refund payment if paid_till was greater.
+
+        # TODO: Handle Refunds if paid_till was greater.
+
+        body = SUBSCRIPTION_CANCEL_BODY % (str(subscription.product.name))
+        if reason is not None:
+            body += reason
+        subject = SUBSCRIPTION_CANCEL_SUBJECT
+        send_text_email(body=body, subject=subject, to_address=subscription.user.email)
         return Response({'status': SUBSCRIPTION_CANCELLED}, status=status.HTTP_200_OK)
+
     return Response({'status': SUBSCRIPTION_NOT_ACTIVE}, status=status.HTTP_400_BAD_REQUEST)
