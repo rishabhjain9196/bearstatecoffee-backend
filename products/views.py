@@ -168,6 +168,14 @@ class EditComboView(APIView):
         """
         return product_utils.create_combo(request.data)
 
+    def patch(self, request, pk):
+        """
+        :param request: New quantities of products that should be in combo
+        :param pk: Primary key of combo product to be updated
+        :return: Response whether the combo quantities were updated(status=200) or not(status=400)
+        """
+        return product_utils.update_combo_quantity(pk, request.data)
+
 
 class SubscriptionView(APIView):
     """

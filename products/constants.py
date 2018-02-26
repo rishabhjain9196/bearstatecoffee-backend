@@ -12,6 +12,7 @@ COMBO_QUANTITY_ERROR = 'The total quantities of products in a combo must at leas
 COMBO_FIELD_ERROR = 'Name and Cost are necessary to add a combo.'
 COMBO_PRODUCT_ERROR = 'One or more Product in the Combo does not exist.'
 COMBO_ADDED = 'The combo was created successfully.'
+COMBO_UPDATED = 'The combo was updated successfully.'
 USER_NOT_FOUND = 'The user does not exist.'
 SUBSCRIPTION_FIELD_ERROR = 'Product and Category are required fields to add a subscription'
 CATEGORY_NOT_FOR_PRODUCT = 'The selected category is not available for this product.'
@@ -32,7 +33,9 @@ SHIFTING_REASON_NO_QUANTITY = 'The subscription is being shifted due to unavaila
 CANCEL_REASON_NO_PRODUCT = 'The subscription is being cancelled due to unavailability of the product.'
 CANCEL_REASON_NO_PERIOD = 'The subscription is being cancelled due to removal of the chosen category option of that ' \
                           'product'
-
+PRODUCT_NOT_FOR_SUBSCRIPTION = 'Product not available for subscriptions'
+CATEGORY_CANT_BE_REMOVED = 'Category does\'nt exist for the product'
+CATEGORY_CANT_BE_ADDED = 'Category is already added to the product'
 # Important Messages To Be Returned In Response
 ADD_TO_CART_VALIDATION = 'product_id or quantity missing.'
 INVALID_PRODUCT = 'No product found.'

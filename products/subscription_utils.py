@@ -1,4 +1,5 @@
 from datetime import date, timedelta, datetime
+import pytz
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
@@ -29,7 +30,7 @@ def add_subscription(user, data):
 
     # Check whether category option is available in product
     try:
-        product = Products.objects.get(pk=product_id, category_ids=category_id)
+        product = Products.objects.get(pk=product_id, category_ids=category_id, is_delete=False)
     except ObjectDoesNotExist:
         return Response({'status': CATEGORY_NOT_FOR_PRODUCT},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -146,7 +147,7 @@ def insert_into_order_from_subscription(subscription_id, payment_status, payment
                                       payment_status=payment_status, is_confirmed=True, amount_payable=amount_payable,
                                       amount_paid=amount_paid)
     new_order.save()
-    body = ORDER_CONFIRMATION_EMAIL_BODY % (str(amount_payable), str(new_order.customer))
+    body = ORDER_CONFIRMATION_EMAIL_BODY % (str(amount_payable), str(new_order.customer_order_id))
     body += ORDER_CONFIRMATION_EMAIL_BODY_PRODUCTS % (str(product.name), str(subscription.quantity),
                                                       str(subscription.quantity * product.cost))
     subject = ORDER_CONFIRMATION_EMAIL_SUBJECT
@@ -160,10 +161,12 @@ def new_orders_from_subscription():
     Places orders from subscriptions.
     :return: Checks and return the subscriptions which are to be ordered in the next 7 days.
     """
-    today = date.today()
+    today = datetime.today()
+    print(Subscriptions.objects.filter(status='A'))
     next_week_subscriptions = Subscriptions.objects.filter(status='A').\
         filter(next_order_date__range=[today, today + timedelta(days=7)])
 
+    print(next_week_subscriptions)
     shifted_subscriptions = []
     cancelled_subscriptions = []
     for obj in next_week_subscriptions:

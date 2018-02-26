@@ -12,7 +12,7 @@ def fetch_all_categories():
         Utility function to get all the categories
         :return JSON data containing all the categories
     """
-    query_set = Categories.objects.all()
+    query_set = Categories.objects.filter(is_delete=False)
     serializer = CategoriesSerializer(query_set, many=True)
     return serializer.data
 
@@ -39,7 +39,7 @@ def update_category(data, key):
         :return: Response whether the data was updated(status = 200) or not(status= 404)
     """
     try:
-        category = Categories.objects.get(pk=key)
+        category = Categories.objects.get(pk=key, is_delete=False)
     except ObjectDoesNotExist:
         return Response({'status': CATEGORY_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
@@ -51,6 +51,7 @@ def update_category(data, key):
         else:
             correct_details = False
             break
+
     if correct_details:
         category.save()
         return Response({'status': CATEGORY_UPDATED}, status=status.HTTP_200_OK)
@@ -80,12 +81,14 @@ def get_all_categories_of_product(key):
         :return: Response whether the data was successfully fetched(status = 200) or not(status= 404)
     """
     try:
-        product = Products.objects.get(pk=key)
+        product = Products.objects.get(pk=key, is_delete=False)
     except ObjectDoesNotExist:
         return Response({'status': PRODUCT_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
-    ser = CategoriesSerializer(product.category_ids.all(), many=True)
-    return Response(ser.data, status=status.HTTP_200_OK)
+    if product.category_ids.all().exists():
+        ser = CategoriesSerializer(product.category_ids.all(), many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
+    return Response({'status': PRODUCT_NOT_FOR_SUBSCRIPTION}, status=status.HTTP_200_OK)
 
 
 def add_category_to_product(product_pk, category_pk):
@@ -93,15 +96,17 @@ def add_category_to_product(product_pk, category_pk):
         Utility function to add a category to a given product
         :param product_pk: Primary key of a product to which category is to be added.
         :param category_pk: Primary key of Category which is to be added.
-        :return: Response whether the data was added(status = 201) or not(status= 404)
+        :return: Response whether the data was added(status=201) or not(status=404)
     """
     try:
-        product = Products.objects.get(pk=product_pk)
-        category = Categories.objects.get(pk=category_pk)
+        product = Products.objects.get(pk=product_pk, is_delete=False)
+        category = Categories.objects.get(pk=category_pk, is_delete=False)
     except ObjectDoesNotExist:
         return Response({'status': PRODUCT_NOT_FOUND + 'or' + CATEGORY_NOT_FOUND},
                         status=status.HTTP_404_NOT_FOUND)
 
+    if category in product.category_ids.all():
+        return Response({'status': CATEGORY_CANT_BE_ADDED}, status=status.HTTP_400_BAD_REQUEST)
     product.category_ids.add(category)
     return Response({'status': CATEGORY_ADDED_TO_PRODUCT}, status=status.HTTP_201_CREATED)
 
@@ -114,11 +119,12 @@ def remove_category_from_product(product_pk, category_pk):
         :return: Response whether the data was removed(status = 200) or not(status= 404)
     """
     try:
-        product = Products.objects.get(pk=product_pk)
-        category = Categories.objects.get(pk=category_pk)
+        product = Products.objects.get(pk=product_pk, is_delete=False)
+        category = Categories.objects.get(pk=category_pk, is_delete=False)
     except ObjectDoesNotExist:
         return Response({'status': PRODUCT_NOT_FOUND + 'or' + CATEGORY_NOT_FOUND},
                         status=status.HTTP_404_NOT_FOUND)
-
-    product.category_ids.remove(category)
-    return Response({'status': CATEGORY_REMOVED_FROM_PRODUCT}, status=status.HTTP_200_OK)
+    if category in product.category_ids.all():
+        product.category_ids.remove(category)
+        return Response({'status': CATEGORY_REMOVED_FROM_PRODUCT}, status=status.HTTP_200_OK)
+    return Response({'status': CATEGORY_CANT_BE_REMOVED}, status=status.HTTP_400_BAD_REQUEST)
