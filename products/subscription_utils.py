@@ -1,5 +1,4 @@
 from datetime import date, timedelta, datetime
-import pytz
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
@@ -162,11 +161,9 @@ def new_orders_from_subscription():
     :return: Checks and return the subscriptions which are to be ordered in the next 7 days.
     """
     today = datetime.today()
-    print(Subscriptions.objects.filter(status='A'))
     next_week_subscriptions = Subscriptions.objects.filter(status='A').\
         filter(next_order_date__range=[today, today + timedelta(days=7)])
 
-    print(next_week_subscriptions)
     shifted_subscriptions = []
     cancelled_subscriptions = []
     for obj in next_week_subscriptions:

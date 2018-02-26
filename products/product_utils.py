@@ -125,9 +125,7 @@ def view_all_combos():
         regarding the primary keys of contained products.
     """
     all_combos = Products.objects.filter(is_combo=True, is_delete=False)
-    print(all_combos)
     serialized_data = ProductSerializer(all_combos, many=True)
-    print(serialized_data)
     for counter, obj in enumerate(all_combos):
         product_ids = obj.combo_product_ids.all()
         serialized_data.data[counter]['combo_ids'] = {}
