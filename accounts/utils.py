@@ -68,7 +68,7 @@ def send_reset_password_email(email):
 
         subject = const.FORGOT_PASSWORD_EMAIL_SUBJECT
         url = settings.BASE_URL + const.FORGOT_PASSWORD_EMAIL_URL
-        msg = const.FORGOT_PASSWORD_EMAIL_DEFAULT_MESSAGE + url + user.token + '/'
+        msg = const.FORGOT_PASSWORD_EMAIL_DEFAULT_MESSAGE + url + user.email_token + '/'
 
         send_text_email(msg, subject, email)
         return Response({'result': True, 'data': const.SUCCESS_ON_SENDING_EMAIL})

@@ -8,9 +8,9 @@ urlpatterns = [
     path('login/', LoginView.as_view()),
     path('logout/', LogoutView.as_view()),
     path('profile/', UserDetailsView.as_view()),
-    re_path('verify/email/(?P<token>.*)/', VerifyEmailView.as_view()),
-    re_path('reset/password/(?P<token>.*)/', ResetPasswordMailView.as_view()),
+    re_path('^verify/email/(?P<token>.*)/$', VerifyEmailView.as_view()),
     path('reset/password/send/mail/', ResetPasswordSendMailView.as_view()),
+    re_path('^reset/password/(?P<token>.*)/$', ResetPasswordMailView.as_view()),
     path('change/password/', ChangePasswordView.as_view()),
     path('refresh/access/token/', RefreshAccessTokenView.as_view()),
 ]
