@@ -7,7 +7,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Products
-        fields = '__all__'
+        exclude = ('category_ids', 'combo_product_ids', 'is_combo', 'is_delete')
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -43,7 +43,7 @@ class CartProductSerializer(serializers.ModelSerializer):
 
 class OrdersSerializers(serializers.ModelSerializer):
     """
-        This is for getting the order detials.
+        This is for getting the order details.
     """
 
     class Meta:

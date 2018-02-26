@@ -169,7 +169,7 @@ class EditComboView(APIView):
         return product_utils.create_combo(request.data)
 
 
-class Subscription(APIView):
+class SubscriptionView(APIView):
     """
         GET: To view all subscriptions by a user
         POST: Add a subscription to a user
@@ -188,8 +188,7 @@ class Subscription(APIView):
     def post(self, request):
         """
         :param request: Data to add a subscription along with user's primary key
-        :return: Response whether the data was added successfully(status= 200) or
-        not(status = 400)
+        :return: Response whether the data was added successfully(status=200) or not(status=400)
         """
         user = request.user
         return subscription_utils.add_subscription(user, request.data)
@@ -197,7 +196,7 @@ class Subscription(APIView):
     def put(self, request):
         """
         :param request: Data regarding the order dates of the subscription
-        :return: Response whether the subscription was able to be finalized or not.
+        :return: Response whether the subscription was finalized (status=200) or not(status=400)
         """
         subscription_id = request.data[0]['subscription_id']
         data = request.data[1]
@@ -221,7 +220,7 @@ class Subscription(APIView):
         return subscription_utils.cancel_subscription(subscription_id)
 
 
-class CheckSubscriptions(APIView):
+class CheckSubscriptionsView(APIView):
     permission_classes = (permissions.IsAdminUser,)
 
     def get(self, request):

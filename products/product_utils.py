@@ -39,18 +39,20 @@ def update_product(data, key):
         Utility Function to update a given product by it's key.
         :param  data: JSON formatted data to update product
         :param key: Primary key of the product to be updated
-        :return A response with either updated (status = 200) or does not exist (status = 404)
+        :return A response with either updated (status = 200), does not exist (status = 404) or Bad Request(status=400)
     """
     try:
         product = Products.objects.get(pk=key, is_delete=False)
     except ObjectDoesNotExist:
         return Response({'status': PRODUCT_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
-    valid_fields = ['name', 'image', 'cost', 'avail_quantity', 'desc', 'rating', 'users_rated', 'is_combo',
-                    'is_delete']
+    valid_fields = ['name', 'image', 'cost', 'avail_quantity', 'desc']
+
     for field in data:
         if field in valid_fields:
             setattr(product, field, data[field])
+        else:
+            return Response({'status': INVALID_FIELDS}, status=status.HTTP_400_BAD_REQUEST)
     product.save()
     return Response({'status': PRODUCT_UPDATED}, status=status.HTTP_200_OK)
 
@@ -95,10 +97,10 @@ def create_combo(combo):
 
     new_combo = Products.objects.create(name=combo_name, image=combo_image,
                                         cost=combo_cost, avail_quantity=combo_avail_quantity,
-                                        desc=combo_desc
+                                        desc=combo_desc, is_combo=True
                                         )
-    new_combo.is_combo = True
-    new_combo.save()
+
+    # Check if combo products exists
     for product_id in combo['quantity']:
         try:
             product = Products.objects.get(pk=int(product_id), is_delete=False)
@@ -106,8 +108,12 @@ def create_combo(combo):
             return Response({'status': COMBO_PRODUCT_ERROR},
                             status=status.HTTP_404_NOT_FOUND)
 
+    new_combo.save()
+
+    for product_id in combo['quantity']:
         combo_relation = Combo(combo=new_combo, product=product, quantity=combo['quantity'][product_id])
         combo_relation.save()
+
     return Response({'status': COMBO_ADDED}, status=status.HTTP_200_OK)
 
 

@@ -29,18 +29,18 @@ urlpatterns = [
     re_path('^combo/view$', views.ComboView.as_view()),
 
     # Add a subscription for a user (POST)
-    re_path('^add/subscription$', views.Subscription.as_view()),
+    re_path('^add/subscription$', views.SubscriptionView.as_view()),
     # View Subscription for a user (GET)
-    re_path('^view/subscription$', views.Subscription.as_view()),
+    re_path('^view/subscription$', views.SubscriptionView.as_view()),
 
     # Show near Subscriptions (GET)
-    re_path('^check/subscription$', views.CheckSubscriptions.as_view()),
+    re_path('^check/subscription$', views.CheckSubscriptionsView.as_view()),
     # Finalize Subscription (PUT)
-    re_path('^finalize/subscription$', views.Subscription.as_view()),
+    re_path('^finalize/subscription$', views.SubscriptionView.as_view()),
     # Shift Subscription (PATCH)
-    re_path('^shift/subscription$', views.Subscription.as_view()),
+    re_path('^shift/subscription$', views.SubscriptionView.as_view()),
     # Cancel Subscription (DELETE)
-    re_path('^cancel/subscription$', views.Subscription.as_view()),
+    re_path('^cancel/subscription$', views.SubscriptionView.as_view()),
 
     re_path('^cart$', views.CartView.as_view()),
     re_path('^order/initiate$', views.InitiateOrderCartView.as_view()),

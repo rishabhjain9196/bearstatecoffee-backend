@@ -23,6 +23,15 @@ SUBSCRIPTION_DATE_ERROR = 'The new order date has to be at least 1 day ahead of 
 SUBSCRIPTION_NOT_ACTIVE = 'This subscription is not currently active or was finished.'
 SUBSCRIPTION_SHIFTED = 'This subscription was successfully shifted.'
 SUBSCRIPTION_CANCELLED = 'This subscription has been cancelled.'
+SUBSCRIPTION_ORDER_CONFIRMATION = 'Your order has been placed from your subscription.'
+SUBSCRIPTION_SHIFT_BODY = 'Your subscription of product %s has been shifted to %s\n'
+SUBSCRIPTION_SHIFT_SUBJECT = 'Shifted Subscription'
+SUBSCRIPTION_CANCEL_SUBJECT = 'Subscription Cancelled'
+SUBSCRIPTION_CANCEL_BODY = 'Your subscription of product %s has been cancelled.\n'
+SHIFTING_REASON_NO_QUANTITY = 'The subscription is being shifted due to unavailability of the product currently.'
+CANCEL_REASON_NO_PRODUCT = 'The subscription is being cancelled due to unavailability of the product.'
+CANCEL_REASON_NO_PERIOD = 'The subscription is being cancelled due to removal of the chosen category option of that ' \
+                          'product'
 
 # Important Messages To Be Returned In Response
 ADD_TO_CART_VALIDATION = 'product_id or quantity missing.'

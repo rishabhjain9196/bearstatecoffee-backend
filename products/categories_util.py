@@ -24,6 +24,7 @@ def add_category(data):
         :return: Response whether the data was added(status = 201) or not(status= 400)
     """
     serializer = CategoriesSerializer(data=data)
+
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
