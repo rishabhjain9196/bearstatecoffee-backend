@@ -13,6 +13,9 @@ class ProductsViewTest(TestCase):
     Test Case Class for testing Products APIs
     """
 
+    factory = APIRequestFactory()
+    admin_user = MyUser.objects.get(is_superuser=True)
+
     @classmethod
     def setUpTestData(cls):
         total_products = 30
@@ -49,8 +52,6 @@ class ProductsViewTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_add_product(self):
-        factory = APIRequestFactory()
-        admin_user = MyUser.objects.get(is_superuser=True)
         url = '/products/add'
         view = EditProductsView.as_view()
 
@@ -61,54 +62,50 @@ class ProductsViewTest(TestCase):
             'desc': 'Test Description!'
         }
 
-        request = factory.post(url, data=payload)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.post(url, data=payload)
+        force_authenticate(request, user=self.admin_user)
         response = view(request)
         self.assertEqual(response.status_code, 400)
 
         payload['name'] = 'test'
-        request = factory.post(url, data=payload)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.post(url, data=payload)
+        force_authenticate(request, user=self.admin_user)
         response = view(request)
         self.assertEqual(response.status_code, 201)
 
     def test_update_product(self):
-        factory = APIRequestFactory()
-        admin_user = MyUser.objects.get(is_superuser=True)
         url = '/products/1/change'
         view = EditProductsView.as_view()
         payload = {
             'image': 'Updated image url'
         }
         # Primary Key Exists
-        request = factory.patch(url, data=payload)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.patch(url, data=payload)
+        force_authenticate(request, user=self.admin_user)
         response = view(request, pk=1)
         self.assertEqual(response.status_code, 200)
 
         # Primary Key Does not Exists
         url = '/products/100/change'
-        request = factory.patch(url, data=payload)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.patch(url, data=payload)
+        force_authenticate(request, user=self.admin_user)
         response = view(request, pk=100)
         self.assertEqual(response.status_code, 404)
 
     def test_delete_product(self):
-        factory = APIRequestFactory()
-        admin_user = MyUser.objects.get(is_superuser=True)
         url = '/products/2/change'
         view = EditProductsView.as_view()
 
         # Primary Key Exists
-        request = factory.delete(url)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.delete(url)
+        force_authenticate(request, user=self.admin_user)
         response = view(request, pk=2)
         self.assertEqual(response.status_code, 200)
 
         # Primary Key Does not Exists
         url = '/products/200/change'
-        request = factory.delete(url)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.delete(url)
+        force_authenticate(request, user=self.admin_user)
         response = view(request, pk=200)
         self.assertEqual(response.status_code, 400)
 
@@ -118,8 +115,6 @@ class ProductsViewTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_add_category(self):
-        factory = APIRequestFactory()
-        admin_user = MyUser.objects.get(is_superuser=True)
         url = '/products/categories/add'
         view = EditCategoriesView.as_view()
 
@@ -129,8 +124,8 @@ class ProductsViewTest(TestCase):
                 "terms": "Sample Terms"
         }
 
-        request = factory.post(url, data=payload)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.post(url, data=payload)
+        force_authenticate(request, user=self.admin_user)
         response = view(request)
         self.assertEqual(response.status_code, 201)
 
@@ -138,14 +133,12 @@ class ProductsViewTest(TestCase):
             "period_number": "1"
         }
 
-        request = factory.post(url, data=payload)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.post(url, data=payload)
+        force_authenticate(request, user=self.admin_user)
         response = view(request)
         self.assertEqual(response.status_code, 400)
 
     def test_update_category(self):
-        factory = APIRequestFactory()
-        admin_user = MyUser.objects.get(is_superuser=True)
         url = '/products/categories/2/change'
         view = EditCategoriesView.as_view()
         payload = {
@@ -154,34 +147,32 @@ class ProductsViewTest(TestCase):
             'terms': 'Sample Terms Updated'
         }
         # Primary Key Exists
-        request = factory.patch(url, data=payload)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.patch(url, data=payload)
+        force_authenticate(request, user=self.admin_user)
         response = view(request, pk=2)
         self.assertEqual(response.status_code, 200)
 
         # Primary Key Does not Exists
         url = '/products/categories/100/change'
-        request = factory.patch(url, data=payload)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.patch(url, data=payload)
+        force_authenticate(request, user=self.admin_user)
         response = view(request, pk=100)
         self.assertEqual(response.status_code, 404)
 
     def test_delete_category(self):
-        factory = APIRequestFactory()
-        admin_user = MyUser.objects.get(is_superuser=True)
         url = '/products/categories/3/change'
         view = EditCategoriesView.as_view()
 
         # Primary Key Exists
-        request = factory.delete(url)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.delete(url)
+        force_authenticate(request, user=self.admin_user)
         response = view(request, pk=3)
         self.assertEqual(response.status_code, 200)
 
         # Primary Key Does not Exists
         url = '/products/categories/200/change'
-        request = factory.delete(url)
-        force_authenticate(request, user=admin_user)
+        request = self.factory.delete(url)
+        force_authenticate(request, user=self.admin_user)
         response = view(request, pk=200)
         self.assertEqual(response.status_code, 404)
 
@@ -239,7 +230,7 @@ class CartProductsTests(TestCase):
 
     def test_cart_view_post(self):
         # Added to cart
-        user = MyUser.objects.get(pk=11)
+        user = MyUser.objects.get(pk=1+self.total_admin_user)
         factory = APIRequestFactory()
         view = CartView.as_view()
         request = factory.post('/products/cart', {
