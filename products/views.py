@@ -208,7 +208,8 @@ class SubscriptionView(APIView):
         """
         subscription_id = request.data[0]['subscription_id']
         data = request.data[1]
-        return subscription_utils.finalize_subscription(subscription_id, data)
+        user = request.user
+        return subscription_utils.finalize_subscription(user.id, subscription_id, data)
 
     def patch(self, request):
         """
@@ -217,7 +218,7 @@ class SubscriptionView(APIView):
         """
         subscription_id = request.data['subscription_id']
         new_date = request.data['next_order_date']
-        return subscription_utils.shift_subscription(subscription_id, new_date)
+        return subscription_utils.shift_subscription(request.user.id, subscription_id, new_date)
 
     def delete(self, request):
         """
@@ -225,7 +226,7 @@ class SubscriptionView(APIView):
         :return: Response whether the subscription was cancelled(status=200) or not cancellable(status=400)
         """
         subscription_id = request.data['subscription_id']
-        return subscription_utils.cancel_subscription(subscription_id)
+        return subscription_utils.cancel_subscription(request.user.id, subscription_id)
 
 
 class CheckSubscriptionsView(APIView):

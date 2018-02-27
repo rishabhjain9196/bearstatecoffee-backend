@@ -55,7 +55,7 @@ def update_category(data, key):
     if correct_details:
         category.save()
         return Response({'status': CATEGORY_UPDATED}, status=status.HTTP_200_OK)
-    return Response({'status': INVALID_FIELDS}, status=status.HTTP_404_NOT_FOUND)
+    return Response({'status': INVALID_FIELDS}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def delete_category(key):
