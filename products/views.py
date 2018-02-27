@@ -243,8 +243,8 @@ class CartView(APIView):
         return product_utils.add_product_to_cart(request.user, request.data)
 
     def delete(self, request):
-        cart_product_id = request.data.get('cart_product_id', '')
-        quantity = request.data.get('quantity', '')
+        cart_product_id = int(request.data.get('cart_product_id', '0'))
+        quantity = int(request.data.get('quantity', '0'))
 
         if not (cart_product_id and quantity):
             return Response({'result': False, 'message': const.CART_VALIDATION},

@@ -95,7 +95,7 @@ def register_user(user_type, data):
         user.generate_token()
         send_verification_email(user.email_token, user.email)
     else:
-        return Response({'result': True, 'message': const.USER_TYPE_INVALID}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'result': False, 'message': const.USER_TYPE_INVALID}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({'result': True, 'data': const.USER_REGISTERED})
 

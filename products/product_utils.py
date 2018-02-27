@@ -144,8 +144,8 @@ def add_product_to_cart(user, data):
     :param data: data fetched from the request, which should have product_id, and quantity.
     :return: True or false, with appropriate message.
     """
-    product_id = data.get('product_id')
-    quantity = data.get('quantity')
+    product_id = int(data.get('product_id', '0'))
+    quantity = int(data.get('quantity', '0'))
 
     if not (product_id and quantity):
         return Response({'result': False, 'message': ADD_TO_CART_VALIDATION},
@@ -166,7 +166,7 @@ def add_product_to_cart(user, data):
             'data': CartProductSerializer(instance=cart_product).data
         }
         return Response(payload)
-    elif product.avail_quantity >= quantity:
+    elif not cart_product and product.avail_quantity >= quantity:
         cart_product = CartProducts.objects.create(user=user, product=product, quantity=quantity)
         payload = {
             'result': True,
@@ -266,13 +266,12 @@ def send_mail_on_order_confirmation(customer_order_id):
             body += ORDER_CONFIRMATION_EMAIL_BODY_PRODUCTS % (
                 product.product.name, str(product.quantity), str(product.quantity * product.product.cost))
         subject = ORDER_CONFIRMATION_EMAIL_SUBJECT
-        send_text_email(body=body, subject=subject, to_address=product.user.email)
+        send_text_email(body=body, subject=subject, to_address=order.user.email)
 
 
 def initiate_payment(data):
     """
         This will update the payment details and initiate payment if necessary.
-    :param user: User fetched from request.
     :param data: It must have cust_order_id, payment_type.
     :return: True or false, with Customer_ID.
     """
