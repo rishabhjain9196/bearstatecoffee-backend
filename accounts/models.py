@@ -1,8 +1,8 @@
-import datetime
 import hashlib
 import os
 
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
 from .managers import MyUserManager
@@ -30,7 +30,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin, BaseModel):
     is_staff = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
     email_token = models.CharField(max_length=255)
-    email_token_created_on = models.DateTimeField(default=datetime.datetime.now())
+    email_token_created_on = models.DateTimeField(default=timezone.now())
 
     USERNAME_FIELD = 'email'
 
@@ -46,6 +46,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin, BaseModel):
                 random_string = hashlib.sha1(os.urandom(128)).hexdigest()
             else:
                 self.email_token = random_string
-                self.email_token_created_on = datetime.datetime.now()
+                self.email_token_created_on = timezone.now()
                 self.save()
                 break

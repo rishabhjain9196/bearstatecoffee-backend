@@ -68,7 +68,7 @@ def send_reset_password_email(email):
 
         subject = const.FORGOT_PASSWORD_EMAIL_SUBJECT
         url = settings.BASE_URL + const.FORGOT_PASSWORD_EMAIL_URL
-        msg = const.FORGOT_PASSWORD_EMAIL_DEFAULT_MESSAGE + url + user.token + '/'
+        msg = const.FORGOT_PASSWORD_EMAIL_DEFAULT_MESSAGE + url + user.email_token + '/'
 
         send_text_email(msg, subject, email)
         return Response({'result': True, 'data': const.SUCCESS_ON_SENDING_EMAIL})
@@ -95,7 +95,7 @@ def register_user(user_type, data):
         user.generate_token()
         send_verification_email(user.email_token, user.email)
     else:
-        return Response({'result': True, 'message': const.USER_TYPE_INVALID}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'result': False, 'message': const.USER_TYPE_INVALID}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({'result': True, 'data': const.USER_REGISTERED})
 
