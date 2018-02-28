@@ -71,9 +71,17 @@ def finalize_subscription(user_id, subscription_id, data):
 
     for element in data:
         if element in valid_fields:
-            setattr(sub, element, datetime.strptime(data[element], date_format))
+            try:
+                check_date = datetime.strptime(data[element], date_format)
+            except ValueError:
+                return Response({'status': INVALID_DATE}, status=status.HTTP_400_BAD_REQUEST)
+
+            setattr(sub, element, check_date)
         else:
             return Response({'status': INVALID_FIELDS}, status=status.HTTP_400_BAD_REQUEST)
+
+    if sub.next_order_date >= sub.last_order_date:
+        return Response({'status': INVALID_DATE}, status=status.HTTP_400_BAD_REQUEST)
 
     paid_till = data.get('paid_till', None)
     if paid_till is not None:
@@ -224,6 +232,7 @@ def new_orders_from_subscription():
 
 def shift_subscription(user_id, subscription_id, next_order_date, reason=None):
     """
+    :param user_id: Primary key of user
     :param subscription_id: Primary Key of subscription which is to be shifted
     :param next_order_date: The date to which the subscription is to be shifted
     :param reason: To provide a reason why the order was shifted.
@@ -236,7 +245,10 @@ def shift_subscription(user_id, subscription_id, next_order_date, reason=None):
 
     date_format = '%d-%m-%Y'
     string_date = next_order_date
-    next_order_date = datetime.strptime(next_order_date, date_format)
+    try:
+        next_order_date = datetime.strptime(next_order_date, date_format)
+    except ValueError:
+        return Response({'status': INVALID_DATE}, status=status.HTTP_400_BAD_REQUEST)
 
     if datetime.now() + timedelta(days=1) > next_order_date:
         return Response({'status': SUBSCRIPTION_DATE_ERROR}, status=status.HTTP_400_BAD_REQUEST)
@@ -265,6 +277,7 @@ def shift_subscription(user_id, subscription_id, next_order_date, reason=None):
 
 def cancel_subscription(user_id, subscription_id, reason=None):
     """
+    :param user_id: Primary key of user
     :param subscription_id: Subscription's Primary Key which needs to be cancelled
     :param reason: To provide a reason why the order was cancelled.
     :return: Response whether the subscription was successfully cancelled or not
