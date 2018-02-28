@@ -278,12 +278,21 @@ def initiate_payment(data):
     payment_type = data.get('payment_type', '')
     customer_order_id = data.get('customer_order_id', '')
     if payment_type and customer_order_id:
+        try:
+            order = Orders.objects.get(customer_order_id=customer_order_id, is_cancelled=False)
+        except ObjectDoesNotExist:
+            return Response({'result': False, 'message': INITIATE_PAYMENT_VALIDATION},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         if payment_type == 'C':
-            Orders.objects.filter(customer_order_id=customer_order_id).update(is_confirmed=True,
-                                                                              payment_type=payment_type)
+            order.is_confirmed = True
+            order.payment_type = payment_type
+            order.save()
+
             send_mail_on_order_confirmation(customer_order_id)
         else:
-            Orders.objects.filter(customer_order_id=customer_order_id).update(payment_type=payment_type)
+            order.payment_type = payment_type
+            order.save()
 
         payload = {
             'result': True
@@ -377,7 +386,7 @@ def view_all_orders():
     """
     payload = {
         'result': True,
-        'data': OrdersSerializers(instance=Orders.objects.al(), many=True).data
+        'data': OrdersSerializers(instance=Orders.objects.all(), many=True).data
     }
 
     return Response(payload, status=status.HTTP_200_OK)

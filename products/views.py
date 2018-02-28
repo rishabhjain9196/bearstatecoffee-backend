@@ -309,5 +309,5 @@ class ViewAllOrders(APIView):
     """
     permission_classes = (permissions.IsAdminUser,)
 
-    def post(self, request):
+    def get(self, request):
         return product_utils.view_all_orders()
