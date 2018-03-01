@@ -169,9 +169,9 @@ def login_user(email, password):
         else:
             user.generate_token()
             send_verification_email(user.email_token, user.email)
-            return Response({'result': True, 'data': const.VERIFY_EMAIL})
+            return Response({'result': False, 'data': const.VERIFY_EMAIL})
     else:
-        return Response({'result': False, 'message': const.USER_INVALID})
+        return Response({'result': False, 'message': const.USER_INVALID}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def refresh_access_token(refresh_token):

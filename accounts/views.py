@@ -113,7 +113,7 @@ class LoginView(APIView):
         if email and password:
             return login_user(email, password)
 
-        return Response({'result': False, 'message': const.LOGIN_VALIDATION})
+        return Response({'result': False, 'message': const.LOGIN_VALIDATION}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):
