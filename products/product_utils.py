@@ -36,7 +36,7 @@ def fetch_all_products():
 
 def update_product(data, key):
     """
-        Utility Function to update a given product by it's key.
+        Utility Function to update a given product/combo by it's key.
         :param  data: JSON formatted data to update product
         :param key: Primary key of the product to be updated
         :return A response with either updated (status = 200), does not exist (status = 404) or Bad Request(status=400)
@@ -59,7 +59,7 @@ def update_product(data, key):
 
 def delete_product(key):
     """
-        Utility function to mark a product as deleted
+        Utility function to mark a product/combo as deleted
         :param key: Primary key of the product to be deleted
         :return A response with either deleted (status = 200) or does not exist (status = 404)
     """
@@ -70,6 +70,7 @@ def delete_product(key):
 
     setattr(product, 'is_delete', True)
     product.save()
+
     return Response({'status': PRODUCT_DELETED}, status=status.HTTP_200_OK)
 
 
@@ -95,24 +96,24 @@ def create_combo(combo):
         return Response({'status': COMBO_FIELD_ERROR},
                         status=status.HTTP_400_BAD_REQUEST)
 
+    # Check if combo products exists
+    for product_id in combo['quantity']:
+        try:
+            product = Products.objects.get(pk=int(product_id), is_delete=False, is_combo=False)
+        except ObjectDoesNotExist:
+            return Response({'status': COMBO_PRODUCT_ERROR},
+                            status=status.HTTP_404_NOT_FOUND)
+
     new_combo = Products.objects.create(name=combo_name, image=combo_image,
                                         cost=combo_cost, avail_quantity=combo_avail_quantity,
                                         desc=combo_desc, is_combo=True
                                         )
 
-    # Check if combo products exists
     for product_id in combo['quantity']:
-        try:
-            product = Products.objects.get(pk=int(product_id), is_delete=False)
-        except ObjectDoesNotExist:
-            return Response({'status': COMBO_PRODUCT_ERROR},
-                            status=status.HTTP_404_NOT_FOUND)
-
-    new_combo.save()
-
-    for product_id in combo['quantity']:
-        combo_relation = Combo(combo=new_combo, product=product, quantity=combo['quantity'][product_id])
-        combo_relation.save()
+        quantity = combo['quantity'][product_id]
+        if quantity is not 0:
+            combo_relation = Combo(combo=new_combo, product_id=product_id, quantity=quantity)
+            combo_relation.save()
 
     return Response({'status': COMBO_ADDED}, status=status.HTTP_200_OK)
 
@@ -130,11 +131,38 @@ def view_all_combos():
         serialized_data.data[counter]['combo_ids'] = {}
         for num in product_ids:
             ser_data = ProductSerializer(num)
-            quan = Combo.objects.filter(combo=serialized_data.data[counter]['pk'],
-                                        product=int(ser_data.data['pk']))
+            quan = Combo.objects.filter(combo=obj.pk, product=num.pk)
             ser_quan = ComboSerializer(quan, many=True)
-            serialized_data.data[counter]['combo_ids'][ser_data.data['pk']] = ser_quan.data[0]['quantity']
+            serialized_data.data[counter]['combo_ids'][num.pk] = ser_quan.data[0]['quantity']
     return Response(serialized_data.data)
+
+
+def update_combo_quantity(combo_id, data):
+    total_quantity = 0
+    for products in data:
+        total_quantity = total_quantity + data[products]
+    if total_quantity < 2:
+        return Response({'status': COMBO_QUANTITY_ERROR},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if combo products exists
+    for product_id in data:
+        try:
+            product = Products.objects.get(pk=int(product_id), is_delete=False, is_combo=False)
+        except ObjectDoesNotExist:
+            return Response({'status': COMBO_PRODUCT_ERROR},
+                            status=status.HTTP_404_NOT_FOUND)
+
+    # deleting old quantities from the many to many relation
+    Combo.objects.filter(combo_id=combo_id).delete()
+
+    for product_id in data:
+        quantity = data[product_id]
+        if quantity is not 0:
+            combo_relation = Combo(combo_id=combo_id, product_id=product_id, quantity=quantity)
+            combo_relation.save()
+
+    return Response({'status': COMBO_UPDATED}, status=status.HTTP_200_OK)
 
 
 def add_product_to_cart(user, data):

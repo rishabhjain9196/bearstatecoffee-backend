@@ -107,8 +107,7 @@ class Orders(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            subscription = kwargs.get('is_subscription', '')
-            if subscription:
+            if self.is_subscription:
                 self.customer_order_id = self.get_order_id('SUBS00')  # This is for subscription based order.
             else:
                 self.customer_order_id = self.get_order_id('INDV00')  # This is for non-subscription based order.
