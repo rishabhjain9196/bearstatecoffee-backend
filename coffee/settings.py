@@ -25,7 +25,7 @@ SECRET_KEY = 'w+caadbmftmhyi3*cdb#vp_k$5#w47-s^ucvb*&qjgljpa_$$*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.100.101', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['192.168.100.101', '127.0.0.1', 'localhost', '192.168.150.161']
 
 
 # Application definition
@@ -41,9 +41,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'products',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -156,3 +158,5 @@ OAUTH2_PROVIDER = {
 }
 
 BASE_URL = 'http://127.0.0.1:8000'
+
+CORS_ORIGIN_ALLOW_ALL = True

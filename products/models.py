@@ -86,7 +86,7 @@ class Orders(models.Model):
     cancelled_by = models.ForeignKey(MyUser, related_name='cancelled', on_delete=models.CASCADE, blank=True, null=True)
     amount_payable = models.FloatField(default=0.00)
     amount_paid = models.FloatField(default=0.00)
-    subscription = models.ForeignKey(Subscriptions, on_delete=models.CASCADE, default=None, blank=True)
+    subscription = models.ForeignKey(Subscriptions, on_delete=models.CASCADE, blank=True, null=True)
     payment_type_choices = (
         ('C', 'Cash on Delivery'),
         ('N', 'Net Banking'),
