@@ -1,0 +1,927 @@
+{
+	"info": {
+		"name": "BearStateCoffee",
+		"_postman_id": "31bf852c-49cc-fe0a-0158-2747ccfbe428",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "View Products (Undeleted)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "UUsxO4xB3bh69utrGDQuJLyNWjq9jB",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n        \"name\": \"Dark Coffee\",\n        \"image\": \"https://goo.gl/aYwphE\",\n        \"cost\": \"50.00\",\n        \"avail_quantity\": 100,\n        \"desc\": \"Good\",\n        \"rating\": \"3.60\",\n        \"users_rated\": 100,\n        \"is_combo\": false,\n        \"is_delete\": false\n\t\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/view",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"view"
+					]
+				},
+				"description": "View Products (Undeleted)"
+			},
+			"response": []
+		},
+		{
+			"name": "Login User",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\" : \"rishabh.jain9196@gmail.com\",\n\t\"password\" : \"rishabh123\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/accounts/login/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"accounts",
+						"login",
+						""
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Login User Admin",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\" : \"rishabh.jain@kuliza.com\",\n\t\"password\" : \"rjrj9196\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/accounts/login/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"accounts",
+						"login",
+						""
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Add Products",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "ab1Arn9Z8flr41unr8aIEiHlrYVb8L",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n        \"image\": \"https://goo.gl/aYwphE\",\n        \"cost\": \"50.00\",\n        \"avail_quantity\": 100,\n        \"desc\": \"Test Description!\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/add",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"add"
+					]
+				},
+				"description": "Add products - admin auth"
+			},
+			"response": []
+		},
+		{
+			"name": "Signup User",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\" : \"rishabh.jain9196@gmail.com\",\n\t\"password\" : \"rishabh123\",\n\t\"first_name\": \"Rishabh\",\n\t\"last_name\": \"Jain\",\n\t\"phone_number\": \"8744985115\",\n\t\"user_type\": \"user\"\n} "
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/accounts/signup/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"accounts",
+						"signup",
+						""
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update Products",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "UUsxO4xB3bh69utrGDQuJLyNWjq9jB",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n        \"name\": \"Dark Coffee 2 Updated\",\n        \"image\": \"https://goo.gl/aYwphE\",\n        \"cost\": \"50.00\",\n        \"avail_quantity\": 100,\n        \"desc\": \"Good\",\n        \"rating\": \"3.60\",\n        \"users_rated\": 100,\n        \"is_combo\": false,\n        \"is_delete\": false\n\t\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/2/change",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"2",
+						"change"
+					]
+				},
+				"description": "Add products - admin auth"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Products/Combo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "UUsxO4xB3bh69utrGDQuJLyNWjq9jB",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n        \"name\": \"Dark Coffee 2 Updated\",\n        \"image\": \"https://goo.gl/aYwphE\",\n        \"cost\": \"50.00\",\n        \"avail_quantity\": 100,\n        \"desc\": \"Good\",\n        \"rating\": \"3.60\",\n        \"users_rated\": 100,\n        \"is_combo\": false,\n        \"is_delete\": false\n\t\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/2/change",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"2",
+						"change"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Add Categories",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "UUsxO4xB3bh69utrGDQuJLyNWjq9jB",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"period_number\" : \"1\",\n\t\"period_name\" : \"Daily\",\n\t\"terms\" : \"Sample Terms\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/categories/add/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"categories",
+						"add",
+						""
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "View all Categories",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/categories/view",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"categories",
+						"view"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Add combo product",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "fHSMbcdxkQ7vZ5fgcV9w7oNWgzl9Z5",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\t\"name\": \"sample product\",\n        \"image\": \"https://goo.gl/aYwphE\",\n        \"cost\": \"50.00\",\n        \"avail_quantity\": 100,\n        \"desc\": \"Test Description!\",\n        \"quantity\":{\n        \t\"14\":0 ,\n        \t\"5\":0,\n        \t\"16\":1\n        }\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/combo/add",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"combo",
+						"add"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update combo product quantity",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "ab1Arn9Z8flr41unr8aIEiHlrYVb8L",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n        \t\"14\":0 ,\n        \t\"5\":0,\n        \t\"16\":1\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/combo/20/edit",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"combo",
+						"20",
+						"edit"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "View all Combos",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/combo/view",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"combo",
+						"view"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "View all Available Categories of a Product",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/7/categories/view",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"7",
+						"categories",
+						"view"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Add Category to product",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "Ir0uyPxJ3MyXV9Po9RgKb5RdcRIUPu",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/1/categories/2/add",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"1",
+						"categories",
+						"2",
+						"add"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Remove Category from product",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "UUsxO4xB3bh69utrGDQuJLyNWjq9jB",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/7/categories/2/change",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"7",
+						"categories",
+						"2",
+						"change"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update Category",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "UUsxO4xB3bh69utrGDQuJLyNWjq9jB",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"period_number\" : \"2\",\n\t\"period_name\" : \"Day\",\n\t\"terms\" : \"Sample Terms Updated\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/categories/2/change",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"categories",
+						"2",
+						"change"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Categories",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "UUsxO4xB3bh69utrGDQuJLyNWjq9jB",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/categories/1/change/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"categories",
+						"1",
+						"change",
+						""
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "View Subscription",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "Fqk7WBZ2ILd2TSLyEEB26jo0WAg5Rz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/view/subscription",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"view",
+						"subscription"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Add Subscription",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "Fqk7WBZ2ILd2TSLyEEB26jo0WAg5Rz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/add/subscription",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"add",
+						"subscription"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Finalize Subscription",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "Fqk7WBZ2ILd2TSLyEEB26jo0WAg5Rz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n\t{\n\t\t\"subscription_id\": 3\n\t},\n\t{\n\t\t\"next_order_date\": \"2018-02-23T12:20:11.249046+05:30\",\n\t\t\"last_order_date\": \"2019-02-23T12:20:11.249046+05:30\",\n\t\t\"paid_till\": \"2018-06-23T12:20:11.249046+05:30\"\n\t}\n]\n"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/finalize/subscription",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"finalize",
+						"subscription"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Check Subscriptions | ADMIN",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "4gYyC4yb6VoGsjbw0M6RvDJ3McyQJu",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/check/subscription",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"check",
+						"subscription"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Shift Subscription",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "Fqk7WBZ2ILd2TSLyEEB26jo0WAg5Rz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"subscription_id\": 5,\n\t\"next_order_date\": \"23-06-2018\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/shift/subscription",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"shift",
+						"subscription"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Cancel Subscription",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "Fqk7WBZ2ILd2TSLyEEB26jo0WAg5Rz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"subscription_id\": 5\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/products/cancel/subscription",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"products",
+						"cancel",
+						"subscription"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
