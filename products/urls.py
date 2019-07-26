@@ -1,8 +1,12 @@
 from django.urls import re_path
 
-from products import views
+from products import views, ml_model
+
+x, y = ml_model.setup()
 
 urlpatterns = [
+
+    re_path('^get$', views.SuggestedTextView.as_view()),
     # view : View all Products
     re_path('^view$', views.ProductsView.as_view()),
     # change : Add Products
@@ -53,3 +57,4 @@ urlpatterns = [
     re_path('^order/initiate/payment$', views.InitiatePaymentView.as_view()),
     re_path('^callback/by/payment/gateway$', views.CallbackByPaymentGatewayView.as_view()),
 ]
+

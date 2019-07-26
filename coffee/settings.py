@@ -25,9 +25,10 @@ SECRET_KEY = 'w+caadbmftmhyi3*cdb#vp_k$5#w47-s^ucvb*&qjgljpa_$$*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.100.101', '127.0.0.1', 'localhost', '192.168.150.161']
+ALLOWED_HOSTS = ['192.168.100.101', '127.0.0.1', 'localhost', '192.168.150.161', '167.220.238.54', '167.220.238.157',
+                 '10.94.176.80', '167.220.238.7', '100.64.93.156']
 
-
+print(ALLOWED_HOSTS)
 # Application definition
 
 INSTALLED_APPS = [
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'products',
+    'django_extensions',
     'corsheaders',
 ]
 
@@ -83,11 +85,11 @@ WSGI_APPLICATION = 'coffee.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ['coffeeproject_db_name'],
-        'USER': os.environ['coffeeproject_db_user'],
-        'PASSWORD': os.environ['coffeeproject_db_password'],
-        'HOST': os.environ['coffeeproject_db_host'],
-        'PORT': os.environ['coffeeproject_db_port'],
+        'NAME': "mydatabase",
+        'USER': "postgres",
+        'PASSWORD': "password",
+        'HOST': "localhost",
+        'PORT': "5432",
     }
 }
 
@@ -148,8 +150,8 @@ AUTH_USER_MODEL = 'accounts.MyUser'
 
 
 # Client_ID and Client_SECRET for OAUTH2
-CLIENT_ID = os.environ['client_id']
-CLIENT_SECRET = os.environ['client_secret']
+CLIENT_ID = "id"
+CLIENT_SECRET = "secret"
 
 
 OAUTH2_PROVIDER = {
@@ -157,6 +159,25 @@ OAUTH2_PROVIDER = {
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'}
 }
 
-BASE_URL = 'http://127.0.0.1:8000'
+BASE_URL = 'https://127.0.0.1:8000'
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_HEADERS = (
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'Access-Control-Allow-Headers',
+    'x-ms-client-env',
+    'x-ms-client-type',
+    'x-ms-client-version',
+    'x-ms-session-id',
+    'x-ms-user-type',
+    'x-ms-scenario-id'
+)

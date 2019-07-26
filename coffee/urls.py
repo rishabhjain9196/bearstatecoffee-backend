@@ -22,4 +22,5 @@ urlpatterns = [
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('products/', include('products.urls')),
     path('accounts/', include('accounts.urls')),
+    path('getSuggestedText/', include('products.urls')),
 ]

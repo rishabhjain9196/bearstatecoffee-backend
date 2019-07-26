@@ -1,9 +1,35 @@
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
-from products import product_utils, categories_util, subscription_utils
+from products import product_utils, categories_util, subscription_utils, ml_model, urls
 import products.constants as const
+
+
+class SuggestedTextView(APIView):
+    """
+        Get: Return predictive Suggested Text
+    """
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get(self, request):
+        previous_message = request.GET['inputMessage']
+        previous_message.replace("<ts-text-command>", "")
+        previous_message.replace("</ts-text-command>", "")
+        print('PrevMessage: ', previous_message)
+        words = previous_message.split()
+        input_text = previous_message
+        if len(words) > 3:
+            input_text = words[len(words)-3] + ' ' + words[len(words)-2] + ' ' + words[len(words)-1]
+        resp, conf = ml_model.generate_text(input_text, 100, 17, urls.x, urls.y)
+        return Response(
+            {
+                'previousMessage': input_text,
+                'data': resp,
+                'conf': conf
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class ProductsView(APIView):

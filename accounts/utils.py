@@ -17,7 +17,7 @@ from accounts.models import MyUser
 from accounts.serializers import MyUserSerializer, MyUserSignupSerializer
 
 
-def send_text_email(body, subject, to_address, from_address=os.environ['email_address']):
+def send_text_email(body, subject, to_address, from_address=""):
     """
         This will send the email.
     :param body: Body of the mail.
@@ -34,7 +34,7 @@ def send_text_email(body, subject, to_address, from_address=os.environ['email_ad
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(os.environ['email_address'], os.environ['email_password'])
+    server.login("", "")
     text = msg.as_string()
     server.sendmail(from_address, to_address, text)
     server.quit()

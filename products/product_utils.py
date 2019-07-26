@@ -29,7 +29,7 @@ def fetch_all_products():
         Utility function to get all products
         :return JSON formatted data of all single products (not combos) that are not deleted.
     """
-    query_set = Products.objects.filter(is_delete=False, is_combo=False)
+    query_set = Products.objects.filter(is_delete=False, is_combo=False).exclude(name="Sample Product")
     serializer = ProductSerializer(query_set, many=True)
     return Response(serializer.data)
 
